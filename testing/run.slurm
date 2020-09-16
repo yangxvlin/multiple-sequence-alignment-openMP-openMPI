@@ -1,5 +1,6 @@
 #!/bin/bash
 #SBATCH --output=run.out
+#SBATCH --time=0:01:00
 
 # <cpus-per-task> <ntasks-per-node> 
 #  1  1-16
