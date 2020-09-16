@@ -9,5 +9,7 @@
 module load gcc/8.3.0
 module load openmpi/3.1.4 
 
-mpicxx -fopenmp -o test test.cpp -O3
-mpirun test < xulin.dat
+export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
+
+mpicxx -std=c++14 -fopenmp -o a test.cpp -O3
+mpirun a < xulin.dat
