@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --output=run.txt
+#SBATCH --output=run.out
 
 # <cpus-per-task> <ntasks-per-node> 
 #  1  1-16

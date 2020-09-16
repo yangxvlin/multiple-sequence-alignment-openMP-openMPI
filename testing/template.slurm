@@ -3,7 +3,6 @@
 # nodes=min-max
 #SBATCH --nodes=12-12
 #SBATCH --mem=32G 
-#SBATCH =seqalkway 
 # You need to load a compiler before openmpi.
 
 module load gcc/8.3.0
