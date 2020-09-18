@@ -292,7 +292,7 @@ std::string getMinimumPenalties(std::string *genes,
 // do stuff for each MPI task based on rank
 void do_MPI_task(int rank) {
     int n_threads = omp_get_max_threads();
-    cout << "rank[" << rank << "] has threads: " << n_threads << endl;
+    // cout << "rank[" << rank << "] has threads: " << n_threads << endl;
     omp_set_num_threads(n_threads);
     MPI_Status status;
     int size;
@@ -303,7 +303,7 @@ void do_MPI_task(int rank) {
     int k = k_pxy_pgap[0], 
         pxy = k_pxy_pgap[1],
         pgap = k_pxy_pgap[2];
-    cout << "rank[" << rank << "] received k pxy pgap " << endl;
+    // cout << "rank[" << rank << "] received k pxy pgap " << endl;
     #ifdef DEBUG
         cout << "rank[" << rank << "][recv] " << "k: " << k << ", pxy: " << pxy << ", pgap: " << pgap << endl;
     #endif // DEBUG
@@ -330,11 +330,11 @@ void do_MPI_task(int rank) {
         }
     }
 
-    cout << "rank[" << rank << "] done task allocation " << n_threads << endl;
+    // cout << "rank[" << rank << "] done task allocation " << n_threads << endl;
     int local_genes_len[k];
     MPI_Bcast(local_genes_len, k, MPI_INT, root, comm);
 
-    cout << "rank[" << rank << "] received string lengths " << n_threads << endl;
+    // cout << "rank[" << rank << "] received string lengths " << n_threads << endl;
     
     int max_gene_len = *std::max_element(local_genes_len, local_genes_len + k) + 1;
     string local_genes[k];
