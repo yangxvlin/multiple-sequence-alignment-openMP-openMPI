@@ -329,7 +329,7 @@ void do_MPI_task(int rank) {
     int local_genes_len[k];
     MPI_Bcast(local_genes_len, k, MPI_INT, root, comm);
     
-    int max_gene_len = *std::max_element(local_genes_len, local_genes_len + k);
+    int max_gene_len = *std::max_element(local_genes_len, local_genes_len + k) + 1;
     string local_genes[k];
     // #pragma omp parallel for schedule(static, 1)
     for (int i = 0; i < k; i++) {
