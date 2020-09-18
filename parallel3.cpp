@@ -91,7 +91,7 @@ int main(int argc, char **argv){
 
 int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, int *xans, int *yans, int m, int n);
 
-const int n_threads = 4;
+// const int n_threads = 4;
 const int sha512_strlen = 128 + 1; // +1 for '\0'
 
 const int ask_for_genes_tag = 1;
@@ -148,7 +148,7 @@ std::string getMinimumPenalties(std::string *genes,
                                        int pgap,
 	                                   int *penalties) {
     MPI_Status status;
-    omp_set_num_threads(n_threads);
+    // omp_set_num_threads(n_threads);
 	int probNum=0;
 
     int size;
@@ -287,7 +287,7 @@ std::string getMinimumPenalties(std::string *genes,
 // called for all tasks with rank!=root
 // do stuff for each MPI task based on rank
 void do_MPI_task(int rank) {
-    omp_set_num_threads(n_threads);
+    // omp_set_num_threads(n_threads);
     MPI_Status status;
     int size;
     MPI_Comm_size(comm, &size);

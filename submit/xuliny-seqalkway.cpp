@@ -91,7 +91,7 @@ int main(int argc, char **argv){
 
 int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, int *xans, int *yans, int m, int n);
 
-const int n_threads = 4;
+// const int n_threads = 4;
 const int sha512_strlen = 128 + 1; // +1 for '\0'
 
 const int ask_for_genes_tag = 1;
@@ -148,18 +148,15 @@ std::string getMinimumPenalties(std::string *genes,
                                        int pgap,
 	                                   int *penalties) {
     MPI_Status status;
-    omp_set_num_threads(n_threads);
+    // omp_set_num_threads(n_threads);
 	int probNum=0;
 
     int size;
     MPI_Comm_size(comm, &size);
 
     // send k, pxy, pgap to wrokers
-    const int k_pxy_pgap[3] = {k, pxy, pgap};
-    // #pragma omp parallel for // this slows down program
-    for (int i = 1; i < size; i++) {
-        MPI_Send(&k_pxy_pgap, 3, MPI_INT, i, 1, comm);
-    }
+    int k_pxy_pgap[3] = {k, pxy, pgap};
+    MPI_Bcast(k_pxy_pgap, 3, MPI_INT, root, comm);
 
     int total = k * (k-1) / 2;
     // calculates string length
@@ -167,26 +164,13 @@ std::string getMinimumPenalties(std::string *genes,
     for (int i = 0; i < k; i++) {
         genes_length[i] = genes[i].length();
     }
+    MPI_Bcast(genes_length, k, MPI_INT, root, comm);
 
-    for (int i = 1; i < size; i++) {
-        int n_genes_to_sent;
-        MPI_Recv(&n_genes_to_sent, 1, MPI_INT, i, ask_for_genes_tag, comm, &status);
-        int genes_to_sent_id[n_genes_to_sent];
-        MPI_Recv(genes_to_sent_id, n_genes_to_sent, MPI_INT, i, ask_for_genes_tag, comm, &status);
-        // print genes to send
-        #ifdef DEBUG
-            cout << "rank[0][recv] rank[" << i << "][want] string(id): ";
-        #endif // DEBUG
-        for (int j = 0; j < n_genes_to_sent; j++) {
-            #ifdef DEBUG
-                cout << genes_to_sent_id[j] << " ";
-            #endif // DEBUG
-            MPI_Send(&(genes_length[genes_to_sent_id[j]]), 1, MPI_INT, i, j, MPI_COMM_WORLD);
-            MPI_Send(genes[genes_to_sent_id[j]].c_str(), genes_length[genes_to_sent_id[j]], MPI_CHAR, i, j, MPI_COMM_WORLD);
-        }
-        #ifdef DEBUG
-            cout << endl;
-        #endif // DEBUG
+    int max_gene_len = *std::max_element(genes_length, genes_length + k);
+    char buffer[max_gene_len];
+    for (int i = 0; i < k; i++) {
+        memcpy(buffer, genes[i].c_str(), genes_length[i]);
+        MPI_Bcast(buffer, genes_length[i], MPI_CHAR, root, comm);
     }
 
     #ifdef DEBUG
@@ -303,13 +287,13 @@ std::string getMinimumPenalties(std::string *genes,
 // called for all tasks with rank!=root
 // do stuff for each MPI task based on rank
 void do_MPI_task(int rank) {
-    omp_set_num_threads(n_threads);
+    // omp_set_num_threads(n_threads);
     MPI_Status status;
     int size;
     MPI_Comm_size(comm, &size);
 
     int k_pxy_pgap[3];
-    MPI_Recv(&k_pxy_pgap, 3, MPI_INT, root, 1, comm, &status);
+    MPI_Bcast(k_pxy_pgap, 3, MPI_INT, root, comm);
     int k = k_pxy_pgap[0], 
         pxy = k_pxy_pgap[1],
         pgap = k_pxy_pgap[2];
@@ -326,45 +310,30 @@ void do_MPI_task(int rank) {
 
     // ask root for the genes needed for calculation
     vector<Triple> tasks; // i, j, id of (i, j) in whole tasks
-    unordered_set<int> genes_to_ask;
+    // unordered_set<int> genes_to_ask;
     // calculate my tasks to do;
     int task_id = 0;
     for(int i=1;i<k;i++){
 		for(int j=0;j<i;j++){
             if (task_id >= my_tasks_start && task_id < my_tasks_end) {
                 tasks.push_back({ i, j, task_id });
-                genes_to_ask.insert(i);
-                genes_to_ask.insert(j);
             } else if (task_id >= my_tasks_end) {
                 break;
             }
             task_id++;
         }
     }
-    // send my request
-    vector<int> sorted_genes_to_ask;
-    sorted_genes_to_ask.assign( genes_to_ask.begin(), genes_to_ask.end() );
-    sort( sorted_genes_to_ask.begin(), sorted_genes_to_ask.end() );
-    int* sorted_genes_to_ask_array = sorted_genes_to_ask.data();
-    int n_genes = sorted_genes_to_ask.size();
-    MPI_Send(&n_genes, 1, MPI_INT, root, ask_for_genes_tag, comm);
-    MPI_Send(sorted_genes_to_ask_array, n_genes, MPI_INT, root, ask_for_genes_tag, comm);
 
-    string local_genes[k];
     int local_genes_len[k];
-    for (int i = 0; i < n_genes; i++) {
-        // sorted_genes_to_ask_array[i]
-        int string_len;
-        MPI_Recv(&string_len, 1, MPI_INT, root, sorted_genes_to_ask_array[i], comm, &status);
-        char string_bufffer[string_len+1]; // +1 for string end
-        MPI_Recv(string_bufffer, string_len, MPI_CHAR, root, sorted_genes_to_ask_array[i], MPI_COMM_WORLD, &status);
-        string_bufffer[string_len] = '\0';
-        #ifdef DEBUG
-            cout << "rank[" << rank << "][recv] " << "string id: " << sorted_genes_to_ask_array[i] << ", len: " << string_len << ", string: " << string_bufffer << endl;
-        #endif // DEBUG
-
-        local_genes[sorted_genes_to_ask_array[i]] = string_bufffer;
-        local_genes_len[sorted_genes_to_ask_array[i]] = string_len;
+    MPI_Bcast(local_genes_len, k, MPI_INT, root, comm);
+    
+    int max_gene_len = *std::max_element(local_genes_len, local_genes_len + k);
+    char buffer[max_gene_len];
+    string local_genes[k];
+    for (int i = 0; i < k; i++) {
+        MPI_Bcast(buffer, local_genes_len[i], MPI_CHAR, root, comm);
+        buffer[local_genes_len[i]] = '\0';
+        local_genes[i] = string(buffer, local_genes_len[i]);
     }
 
     // do sequence alignment calculation
