@@ -303,7 +303,7 @@ void do_MPI_task(int rank) {
     int k = k_pxy_pgap[0], 
         pxy = k_pxy_pgap[1],
         pgap = k_pxy_pgap[2];
-
+    cout << "rank[" << rank << "] received k pxy pgap " << endl;
     #ifdef DEBUG
         cout << "rank[" << rank << "][recv] " << "k: " << k << ", pxy: " << pxy << ", pgap: " << pgap << endl;
     #endif // DEBUG
@@ -330,8 +330,11 @@ void do_MPI_task(int rank) {
         }
     }
 
+    cout << "rank[" << rank << "] done task allocation " << n_threads << endl;
     int local_genes_len[k];
     MPI_Bcast(local_genes_len, k, MPI_INT, root, comm);
+
+    cout << "rank[" << rank << "] received string lengths " << n_threads << endl;
     
     int max_gene_len = *std::max_element(local_genes_len, local_genes_len + k) + 1;
     string local_genes[k];
@@ -342,6 +345,7 @@ void do_MPI_task(int rank) {
         buffer[local_genes_len[i]] = '\0';
         local_genes[i] = string(buffer, local_genes_len[i]);
     }
+    cout << "rank[" << rank << "] received strings" << endl;
 
     // do sequence alignment calculation
     int task_ids[tasks_per_process];
@@ -384,12 +388,16 @@ void do_MPI_task(int rank) {
         #endif // DEBUG
     }    
 
+    cout << "rank[" << rank << "] finish calculations " << endl;
+
     MPI_Send(task_ids, tasks_per_process, MPI_INT, root, collect_results_tag, comm);
     MPI_Send(task_penalties, tasks_per_process, MPI_INT, root, collect_results_tag2, comm);
     // sent jobs result to root
     for (int i = 0; i < tasks_per_process; i++) {
         MPI_Send(task_problemhashs[i].c_str(), 128, MPI_CHAR, root, collect_results_tag3, comm);
     }
+
+    cout << "rank[" << rank << "] finish send results to root " << endl;
     #ifdef DEBUG
         cout << "rank[" << rank << "][finish] " << endl;
     #endif // DEBUG
