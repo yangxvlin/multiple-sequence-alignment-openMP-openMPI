@@ -91,7 +91,7 @@ int main(int argc, char **argv){
 
 int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, int *xans, int *yans, int m, int n);
 
-const int n_threads = 16;
+// const int n_threads = 16;
 const int sha512_strlen = 128 + 1; // +1 for '\0'
 
 const int ask_for_genes_tag = 1;
@@ -148,6 +148,8 @@ std::string getMinimumPenalties(std::string *genes,
                                        int pgap,
 	                                   int *penalties) {
     MPI_Status status;
+    int n_threads = omp_get_max_threads();
+    cout << "rank[" << 0 << "] has threads: " << n_threads << endl;
     omp_set_num_threads(n_threads);
 	int probNum=0;
 
@@ -255,7 +257,7 @@ std::string getMinimumPenalties(std::string *genes,
         char buffer[sha512_strlen];
         
         for (int j = 0; j < tasks_per_process; j++) {
-            penalties[task_ids[j]] = task_penalties[task_ids[j]];
+            penalties[task_ids[j]] = task_penalties[j];
 
             MPI_Recv(buffer, 128, MPI_CHAR, i, collect_results_tag3, comm, &status);
             answers_hash[task_ids[j]] = string(buffer, 128);
@@ -289,6 +291,8 @@ std::string getMinimumPenalties(std::string *genes,
 // called for all tasks with rank!=root
 // do stuff for each MPI task based on rank
 void do_MPI_task(int rank) {
+    int n_threads = omp_get_max_threads();
+    cout << "rank[" << rank << "] has threads: " << n_threads << endl;
     omp_set_num_threads(n_threads);
     MPI_Status status;
     int size;
