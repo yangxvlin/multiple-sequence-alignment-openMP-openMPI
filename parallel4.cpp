@@ -255,7 +255,7 @@ std::string getMinimumPenalties(std::string *genes,
         char buffer[sha512_strlen];
         
         for (int j = 0; j < tasks_per_process; j++) {
-            penalties[task_ids[j]] = task_penalties[task_ids[j]];
+            penalties[task_ids[j]] = task_penalties[j];
 
             MPI_Recv(buffer, 128, MPI_CHAR, i, collect_results_tag3, comm, &status);
             answers_hash[task_ids[j]] = string(buffer, 128);
