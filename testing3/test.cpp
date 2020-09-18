@@ -397,6 +397,7 @@ void do_MPI_task(int rank) {
 
 int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, int *xans, int *yans, int m, int n) {
 	int i, j; // intialising variables
+    int n_threads = omp_get_num_threads();
 
     // int m = x.length(); // length of gene1
     // int n = y.length(); // length of gene2
