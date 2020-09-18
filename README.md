@@ -17,7 +17,7 @@ COMP90025 - Parallel and Multicore Computing - 2020S2 - Assignment2B
       That means you are using 4×4 cores per node, so 4×4×12 cores total.
       ```
 ## how to run on wsl
-- ``` mpicxx -std=c++14 -fopenmp -o a parallel3.cpp -O3 ```
+- ``` mpicxx -std=c++14 -fopenmp -o a parallel4.cpp -O3 ```
 - ``` mpirun -np 4 a < mseq.dat > mseq.out ```
 - ``` mpirun -np 4 a < mseq1.dat > parallel1_mseq1.out ```
 ## how to test
