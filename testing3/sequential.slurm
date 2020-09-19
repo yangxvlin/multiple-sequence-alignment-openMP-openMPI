@@ -1,13 +1,13 @@
 #!/bin/bash
 #SBATCH --time=0:39:00
 # nodes=min-max
-#SBATCH --nodes=12-12
+#SBATCH --nodes=1-1
 #SBATCH --mem=32G 
---output=sequential.txt    
---job-name=sequential
---cpus-per-task=1 
---ntasks-per-node=1
---partition=physical    
+#SBATCH --output=sequential.txt    
+#SBATCH --job-name=sequential
+#SBATCH --cpus-per-task=1 
+#SBATCH --ntasks-per-node=1
+#SBATCH --partition=physical    
 # You need to load a compiler before openmpi.
 
 module load gcc/8.3.0
