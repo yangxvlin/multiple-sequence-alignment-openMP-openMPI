@@ -3,7 +3,8 @@
 # nodes=min-max
 #SBATCH --nodes=1-1
 #SBATCH --mem=32G 
-#SBATCH --output=sequential.txt    
+#SBATCH --output=sequential.out
+#SBATCH --error=sequential.err
 #SBATCH --job-name=sequential
 #SBATCH --cpus-per-task=1 
 #SBATCH --ntasks-per-node=1
