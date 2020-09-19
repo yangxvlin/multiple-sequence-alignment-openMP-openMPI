@@ -391,98 +391,154 @@ void do_MPI_task(int rank) {
 }
 
 int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, int *xans, int *yans, int m, int n) {
-	
 	int i, j; // intialising variables
 
-	// int m = x.length(); // length of gene1
-	// int n = y.length(); // length of gene2
-	
-	// table for storing optimal substructure answers
-	int **dp = new2d (m+1, n+1);
-	size_t size = m + 1;
-	size *= n + 1;
-	memset (dp[0], 0, size);
+    // int m = x.length(); // length of gene1
+    // int n = y.length(); // length of gene2
+    int row = m + 1, col = n + 1;
 
-	// intialising the table
-	for (i = 0; i <= m; i++)
-	{
-		dp[i][0] = i * pgap;
-	}
-	for (i = 0; i <= n; i++)
-	{
-		dp[0][i] = i * pgap;
-	}
+    // table for storing optimal substructure answers
+    int **dp = new2d(row, col);
+	//	size_t size = m + 1;
+	//	size *= n + 1;
+	//	memset (dp[0], 0, size);
 
-	// calcuting the minimum penalty
-	for (i = 1; i <= m; i++)
-	{
-		for (j = 1; j <= n; j++)
-		{
-			if (x[i - 1] == y[j - 1])
-			{
-				dp[i][j] = dp[i - 1][j - 1];
+    // intialising the table
+    #pragma omp parallel 
+    {
+        #pragma omp for nowait
+        for (i = 0; i <= m; i++) {
+            dp[i][0] = i * pgap;
+        }
+        #pragma omp for
+        for (i = 1; i <= n; i++) {
+            dp[0][i] = i * pgap;
+        }
+    }
+
+
+    #ifdef DEBUG
+		cout.fill(' ');
+        for (i = 0; i < row; i++) {
+            for (j = 0; j < col; j++) {
+                // Prints ' ' if j != n-1 else prints '\n'           
+                cout << setw(3) << dp[i][j] << " "; 
 			}
-			else
-			{
-				dp[i][j] = min3(dp[i - 1][j - 1] + pxy ,
-						dp[i - 1][j] + pgap ,
-						dp[i][j - 1] + pgap);
+			cout << "\n";
+		}
+        cout << ">>>> \n";
+    #endif
+
+    // calcuting the minimum penalty
+    
+    // Tile parallel
+    int n_parallel = n_threads + (int (floor((1.0 * n_threads) / 3)));
+    // calculate tile size
+    int tile_width  = (int) ceil((1.0*m) / n_parallel), 
+        tile_length = (int) ceil((1.0*n) / n_parallel);
+    int num_tile_in_width = (int) ceil((1.0*m) / tile_width);
+    int num_tile_in_length = (int) ceil((1.0*n) / tile_length);
+
+    // modified from: https://www.geeksforgeeks.org/zigzag-or-diagonal-traversal-of-matrix/
+    // There will be tile_width + num_tile_in_length-1 lines in the output
+    for (int line = 1; line <= (num_tile_in_width + num_tile_in_length - 1); line++) {
+        /* Get column index of the first element in this line of output.
+           The index is 0 for first tile_width lines and line - tile_width for remaining
+           lines  */
+        int start_col = max(0, line - num_tile_in_width);
+
+        /* Get count of elements in this line. The count of elements is
+           equal to minimum of line number, num_tile_in_length-start_col and num_tile_in_width */
+        int count = min(line, min((num_tile_in_length - start_col), num_tile_in_width));
+
+        // parallel each tile on anti-diagonal
+        #pragma omp parallel for
+        for (int z = 0; z < count; z++) {
+            int tile_i_start = (min(num_tile_in_width, line)-z-1)*tile_width +1,
+                tile_j_start = (start_col+z)*tile_length +1;
+
+            // sequential calculate cells in tile
+            for (int i = tile_i_start; i < min(tile_i_start + tile_width, row); i++) {
+                for (int j = tile_j_start; j < min(tile_j_start + tile_length, col); j++) {
+
+                    if (x[i - 1] == y[j - 1]) {
+                        dp[i][j] = dp[i - 1][j - 1];
+                    } else {
+                        dp[i][j] = min3(dp[i - 1][j - 1] + pxy ,
+                                dp[i - 1][j] + pgap ,
+                                dp[i][j - 1] + pgap);
+                    }
+                }
+            }
+        }
+    }
+
+    #ifdef DEBUG
+		cout.fill(' ');
+        for (i = 0; i < row; i++) {
+            for (j = 0; j < col; j++) {         
+                cout << setw(3) << dp[i][j] << " "; 
 			}
+			cout << "\n";
 		}
-	}
+        cout << ">>>> \n";
+    #endif
 
-	// Reconstructing the solution
-	int l = n + m; // maximum possible length
-	
-	i = m; j = n;
-	
-	int xpos = l;
-	int ypos = l;
-	
-	while ( !(i == 0 || j == 0))
-	{
-		if (x[i - 1] == y[j - 1])
-		{
-			xans[xpos--] = (int)x[i - 1];
-			yans[ypos--] = (int)y[j - 1];
-			i--; j--;
-		}
-		else if (dp[i - 1][j - 1] + pxy == dp[i][j])
-		{
-			xans[xpos--] = (int)x[i - 1];
-			yans[ypos--] = (int)y[j - 1];
-			i--; j--;
-		}
-		else if (dp[i - 1][j] + pgap == dp[i][j])
-		{
-			xans[xpos--] = (int)x[i - 1];
-			yans[ypos--] = (int)'_';
-			i--;
-		}
-		else if (dp[i][j - 1] + pgap == dp[i][j])
-		{
-			xans[xpos--] = (int)'_';
-			yans[ypos--] = (int)y[j - 1];
-			j--;
-		}
-	}
-	while (xpos > 0)
-	{
-		if (i > 0) xans[xpos--] = (int)x[--i];
-		else xans[xpos--] = (int)'_';
-	}
-	while (ypos > 0)
-	{
-		if (j > 0) yans[ypos--] = (int)y[--j];
-		else yans[ypos--] = (int)'_';
-	}
+    // Reconstructing the solution
+    int l = n + m; // maximum possible length
 
-	int ret = dp[m][n];
+    i = m;
+    j = n;
 
-	delete[] dp[0];
-	delete[] dp;
-	
-	return ret;
+    int xpos = l;
+    int ypos = l;
+
+    while (!(i == 0 || j == 0)) {
+
+        if (x[i - 1] == y[j - 1]) {
+            xans[xpos--] = (int) x[--i];
+            yans[ypos--] = (int) y[--j];
+            // xans[xpos--] = (int) x[i - 1];
+            // yans[ypos--] = (int) y[j - 1];
+            // i--;
+            // j--;
+        } else if (dp[i - 1][j - 1] + pxy == dp[i][j]) {
+            xans[xpos--] = (int) x[--i];
+            yans[ypos--] = (int) y[--j];
+            // xans[xpos--] = (int) x[i - 1];
+            // yans[ypos--] = (int) y[j - 1];
+            // i--;
+            // j--;
+        } else if (dp[i - 1][j] + pgap == dp[i][j]) {
+            xans[xpos--] = (int) x[--i];
+            yans[ypos--] = (int) '_';
+            // xans[xpos--] = (int) x[i - 1];
+            // yans[ypos--] = (int) '_';
+            // i--;
+        // } else if (dp[i][j - 1] + pgap == dp[i][j]) {
+        } else {
+            xans[xpos--] = (int) '_';
+            yans[ypos--] = (int) y[--j];
+            // xans[xpos--] = (int) '_';
+            // yans[ypos--] = (int) y[j - 1];
+            // j--;
+        }
+    }
+    while (xpos > 0) {
+        if (i > 0) xans[xpos--] = (int) x[--i];
+        else xans[xpos--] = (int) '_';
+    }
+    while (ypos > 0) {
+        if (j > 0) yans[ypos--] = (int) y[--j];
+        else yans[ypos--] = (int) '_';
+    }
+
+    int ret = dp[m][n];
+
+    delete[] dp[0];
+    delete[] dp;
+
+    return ret;
 }
 
 // function to find out the minimum penalty
