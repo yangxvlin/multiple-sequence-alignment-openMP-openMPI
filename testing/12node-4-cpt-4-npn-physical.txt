@@ -1,0 +1,13 @@
+threads used: 4
+slurmstepd: error: *** JOB 19999780 ON spartan-bm085 CANCELLED AT 2020-09-17T04:33:25 DUE TO TIME LIMIT ***
+--------------------------------------------------------------------------
+ORTE has lost communication with a remote daemon.
+
+  HNP daemon   : [[28559,0],0] on node spartan-bm085
+  Remote daemon: [[28559,0],7] on node spartan-bm111
+
+This is usually due to either a failure of the TCP network
+connection to the node, or possibly an internal failure of
+the daemon itself. We cannot recover from this failure, and
+therefore will terminate the job.
+--------------------------------------------------------------------------

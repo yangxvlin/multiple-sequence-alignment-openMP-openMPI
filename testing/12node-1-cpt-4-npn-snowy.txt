@@ -1,0 +1,24 @@
+--------------------------------------------------------------------------
+A system call failed during shared memory initialization that should
+not have.  It is likely that your MPI job will now either abort or
+experience performance degradation.
+
+  Local host:  spartan-snowy018.hpc.unimelb.edu.au
+  System call: open(2) 
+  Error:       Permission denied (errno 13)
+--------------------------------------------------------------------------
+threads used: 1
+[spartan-snowy002.hpc.unimelb.edu.au:29042] 3 more processes have sent help message help-opal-shmem-mmap.txt / sys call fail
+[spartan-snowy002.hpc.unimelb.edu.au:29042] Set MCA parameter "orte_base_help_aggregate" to 0 to see all help / error messages
+slurmstepd: error: *** JOB 19999559 ON spartan-snowy002 CANCELLED AT 2020-09-17T06:58:29 DUE TO TIME LIMIT ***
+--------------------------------------------------------------------------
+ORTE has lost communication with a remote daemon.
+
+  HNP daemon   : [[20060,0],0] on node spartan-snowy002
+  Remote daemon: [[20060,0],9] on node spartan-snowy021
+
+This is usually due to either a failure of the TCP network
+connection to the node, or possibly an internal failure of
+the daemon itself. We cannot recover from this failure, and
+therefore will terminate the job.
+--------------------------------------------------------------------------
