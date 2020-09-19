@@ -345,7 +345,7 @@ void do_MPI_task(int rank) {
         buffer[local_genes_len[i]] = '\0';
         local_genes[i] = string(buffer, local_genes_len[i]);
     }
-    cout << "rank[" << rank << "] received strings" << endl;
+    // cout << "rank[" << rank << "] received strings" << endl;
 
     // do sequence alignment calculation
     int task_ids[tasks_per_process];
