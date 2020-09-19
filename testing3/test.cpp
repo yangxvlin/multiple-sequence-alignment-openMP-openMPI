@@ -388,7 +388,7 @@ void do_MPI_task(int rank) {
         #endif // DEBUG
     }    
 
-    cout << "rank[" << rank << "] finish calculations " << endl;
+    // cout << "rank[" << rank << "] finish calculations " << endl;
 
     MPI_Send(task_ids, tasks_per_process, MPI_INT, root, collect_results_tag, comm);
     MPI_Send(task_penalties, tasks_per_process, MPI_INT, root, collect_results_tag2, comm);
@@ -397,7 +397,7 @@ void do_MPI_task(int rank) {
         MPI_Send(task_problemhashs[i].c_str(), 128, MPI_CHAR, root, collect_results_tag3, comm);
     }
 
-    cout << "rank[" << rank << "] finish send results to root " << endl;
+    // cout << "rank[" << rank << "] finish send results to root " << endl;
     #ifdef DEBUG
         cout << "rank[" << rank << "][finish] " << endl;
     #endif // DEBUG
