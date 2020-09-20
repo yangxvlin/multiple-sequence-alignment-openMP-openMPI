@@ -194,12 +194,12 @@ std::string getMinimumPenalties(std::string *genes,
     // ask root for the genes needed for calculation
     int task_id = 0;
     // calculate calculation cells in each task and distribute evenly
-    long long n_cells[total];
-    long long total_cells = 0;
+    unsigned long long n_cells[total];
+    unsigned long long total_cells = 0;
     for(int i=1;i<k;i++){
 		for(int j=0;j<i;j++){
             // cout << genes_length[i] << " " << genes_length[j] << endl;
-            n_cells[task_id] = genes_length[i] * genes_length[j];
+            n_cells[task_id] = (long) genes_length[i] * genes_length[j];
             total_cells += n_cells[task_id];
             // cout << i << " " << j << " " << n_cells[task_id] << " " << total_cells <<endl;
             task_id++;
@@ -208,12 +208,12 @@ std::string getMinimumPenalties(std::string *genes,
 
     cout << "22222222" << endl;
 
-    long long cells_per_proccess = total_cells / size;
+    unsigned long long cells_per_proccess = total_cells / size;
     vector<Triple> tasks[size]; // i, j, id of (i, j) in whole tasks
     task_id = 0;
     // int task_rank_mapping[total];
     int cur_rank = 0;
-    long long tmp = 0;
+    unsigned long long tmp = 0;
     for(int i=1;i<k;i++){
 		for(int j=0;j<i;j++){
             tmp += n_cells[task_id];
@@ -406,8 +406,8 @@ void do_MPI_task(int rank) {
 
     int task_id = 0;
     // calculate calculation cells in each task and distribute evenly
-    long long n_cells[total];
-    long long total_cells = 0;
+    unsigned long long n_cells[total];
+    unsigned long long total_cells = 0;
     for(int i=1;i<k;i++){
 		for(int j=0;j<i;j++){
             n_cells[task_id] = ((long) local_genes_len[i]) * ((long) local_genes_len[j]);
@@ -416,12 +416,12 @@ void do_MPI_task(int rank) {
         }
     }
 
-    long long cells_per_proccess = total_cells / size;
+    unsigned long long cells_per_proccess = total_cells / size;
     vector<Triple> tasks[size]; // i, j, id of (i, j) in whole tasks
     task_id = 0;
     // int task_rank_mapping[total];
     int cur_rank = 0;
-    long long tmp = 0;
+    unsigned long long tmp = 0;
     for(int i=1;i<k;i++){
 		for(int j=0;j<i;j++){
             tmp += n_cells[task_id];
