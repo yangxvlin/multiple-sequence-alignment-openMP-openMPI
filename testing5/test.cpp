@@ -225,7 +225,7 @@ std::string getMinimumPenalties(std::string *genes,
                 cur_rank++;
                 tmp = 0;
             }
-            // cout << cur_rank << " does task: " << task_id << endl;
+            cout << cur_rank << " does task: " << task_id << endl;
             task_id++;
         }
     }
