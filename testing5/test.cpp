@@ -189,7 +189,7 @@ std::string getMinimumPenalties(std::string *genes,
     // int tasks_per_process = (int) floor((1.0*total) / size);
     // int my_tasks_start = tasks_per_process * (size-1), my_tasks_end = total; // lask chunk of tasks on root
 
-    cout << "11111111" << endl;
+    // cout << "11111111" << endl;
 
     // ask root for the genes needed for calculation
     int task_id = 0;
@@ -206,7 +206,7 @@ std::string getMinimumPenalties(std::string *genes,
         }
     }
 
-    cout << "22222222" << endl;
+    // cout << "22222222" << endl;
 
     unsigned long long cells_per_proccess = total_cells / size;
     vector<Triple> tasks[size]; // i, j, id of (i, j) in whole tasks
@@ -218,7 +218,7 @@ std::string getMinimumPenalties(std::string *genes,
 		for(int j=0;j<i;j++){
             tmp += n_cells[task_id];
 
-            cout << cur_rank << " does task: " << task_id << " (" << tmp << ")"<< cells_per_proccess << endl;
+            // cout << cur_rank << " does task: " << task_id << " (" << tmp << ")"<< cells_per_proccess << endl;
             tasks[cur_rank].push_back({ i, j, task_id });
             
             if (tmp > cells_per_proccess) {
@@ -230,7 +230,7 @@ std::string getMinimumPenalties(std::string *genes,
         }
     }
 
-    cout << "33333333" << endl;
+    // cout << "33333333" << endl;
 
     int i_max_length = -1, j_max_length = -1;
     for (int z = 0; z < tasks[0].size(); z++) {
@@ -243,7 +243,7 @@ std::string getMinimumPenalties(std::string *genes,
         }
     }
 
-    cout << "44444444" << endl;
+    // cout << "44444444" << endl;
 
     // create dp matrix for all tasks
     int **dp = new2d(i_max_length + 1, j_max_length + 1);
@@ -264,7 +264,7 @@ std::string getMinimumPenalties(std::string *genes,
         cout << "rank[0][tasks generation finish]" << endl;
     #endif // DEBUG
 
-    cout << "55555555" << endl;
+    // cout << "55555555" << endl;
 
     string answers_hash[total];
     // char answers_hash_array[total][sha512_strlen];
@@ -307,7 +307,7 @@ std::string getMinimumPenalties(std::string *genes,
         #endif // DEBUG
     }
 
-    cout << "66666666" << endl;
+    // cout << "66666666" << endl;
 
     #ifdef DEBUG
         cout << "rank[0][calc] finish" << endl;
@@ -336,7 +336,7 @@ std::string getMinimumPenalties(std::string *genes,
         #endif // DEBUG
     }
 
-    cout << "77777777" << endl;
+    // cout << "77777777" << endl;
 
     std::string alignmentHash="";
     for (int i = 0; i < total; i++) {
