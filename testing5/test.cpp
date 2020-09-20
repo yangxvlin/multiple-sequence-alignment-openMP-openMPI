@@ -218,6 +218,7 @@ std::string getMinimumPenalties(std::string *genes,
 		for(int j=0;j<i;j++){
             tmp += n_cells[task_id];
 
+            cout << cur_rank << " does task: " << task_id << " (" << tmp << ")"<< cells_per_proccess << endl;
             tasks[cur_rank].push_back({ i, j, task_id });
             
             if (tmp > cells_per_proccess) {
@@ -225,7 +226,6 @@ std::string getMinimumPenalties(std::string *genes,
                 cur_rank++;
                 tmp = 0;
             }
-            cout << cur_rank << " does task: " << task_id << endl;
             task_id++;
         }
     }
