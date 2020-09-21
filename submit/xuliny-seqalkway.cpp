@@ -791,3 +791,5 @@ int getMinimumPenalty(std::string x, std::string y, int pxy, int pgap, int *xans
 	
 	return ret;
 }
+
+// mpicxx -fopenmp -o xuliny-seqalkway xuliny-seqalkway.cpp
