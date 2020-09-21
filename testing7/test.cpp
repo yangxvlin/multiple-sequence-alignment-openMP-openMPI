@@ -387,7 +387,7 @@ std::string getMinimumPenalties(std::string *genes,
 // called for all tasks with rank!=root
 // do stuff for each MPI task based on rank
 void do_MPI_task(int rank) {
-    uint64_t start = GetTimeStamp();
+    uint64_t start = GetTimeStamp(), end;
     int n_threads = omp_get_max_threads();
     // cout << "rank[" << rank << "] has threads: " << n_threads << endl;
     omp_set_num_threads(n_threads);
@@ -535,7 +535,7 @@ void do_MPI_task(int rank) {
     }    
 
     end = GetTimeStamp();
-    cout << "66666666 rank[" << rank "]" << end - start << endl;
+    cout << "66666666 rank[" << rank << "]" << end - start << endl;
     // start = GetTimeStamp();
 
     // cout << "rank[" << rank << "] finish calculations " << endl;
