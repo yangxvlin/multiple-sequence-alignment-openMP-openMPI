@@ -103,6 +103,15 @@ const int collect_results_tag3 = 5;
 struct Triple { 
    int x, y, z; 
 }; 
+struct Task {
+    int i, j, task_id;
+    unsigned long long task_load;
+}
+struct task_cmp {
+    bool operator()(const Task & a, const Task & b) {
+        return a.task_load > b.task_load;
+    }
+};
 
 struct Quatic {
     int x, y, z, r; 
@@ -198,14 +207,16 @@ std::string getMinimumPenalties(std::string *genes,
     // ask root for the genes needed for calculation
     int task_id = 0;
     // calculate calculation cells in each task and distribute evenly
-    unsigned long long n_cells[total];
-    unsigned long long total_cells = 0;
+    // unsigned long long total_cells = 0;
+    priority_queue<Task, vector<Task>, task_cmp> task_pq;
     for(int i=1;i<k;i++){
 		for(int j=0;j<i;j++){
-            // cout << genes_length[i] << " " << genes_length[j] << endl;
-            n_cells[task_id] = (long) genes_length[i] * genes_length[j];
-            total_cells += n_cells[task_id];
-            // cout << i << " " << j << " " << n_cells[task_id] << " " << total_cells <<endl;
+            Task t;
+            t.i = i;
+            t.j = j;
+            t.task_id = task_id;
+            t.task_load = genes_length[i] * genes_length[j];
+            task_pq.push(t);
             task_id++;
         }
     }
@@ -214,7 +225,6 @@ std::string getMinimumPenalties(std::string *genes,
     cout << "22222222 " << end - start << endl;
     start = GetTimeStamp();
 
-    unsigned long long cells_per_proccess = total_cells / size;
     vector<Triple> tasks[size]; // i, j, id of (i, j) in whole tasks
     task_id = 0;
     // int task_rank_mapping[total];
@@ -222,29 +232,38 @@ std::string getMinimumPenalties(std::string *genes,
     for (int i = 0; i < size; i++) {
         rank_load[i] = 0;
     }
-    for(int i=1;i<k;i++){
-		for(int j=0;j<i;j++){
-            int rank_with_min_load = 0;
-            // unsigned long long tmp = rank_load[rank_with_min_load];
+    while (!task_pq.empty()) {
+        Task t = task_pq.pop();
+        task_pq.pop();
+        
+        int rank_with_min_load = 0;
+        // unsigned long long tmp = rank_load[rank_with_min_load];
 
-            // make rank 0 as minimum task load as possible
-            for (int r = size-1; r > 0; r-- ) {
-                // find the rank with min task load
-                if (rank_load[r] < rank_load[rank_with_min_load]) {
-                    rank_with_min_load = r;
-                }
+        // make rank 0 as minimum task load as possible
+        for (int r = size-1; r > 0; r-- ) {
+            // find the rank with min task load
+            if (rank_load[r] < rank_load[rank_with_min_load]) {
+                rank_with_min_load = r;
             }
-            // load task to rank with min load
-            rank_load[rank_with_min_load] += n_cells[task_id];
-            tasks[rank_with_min_load].push_back({ i, j, task_id });
-            
-            task_id++;
         }
+        // load task to rank with min load
+        rank_load[rank_with_min_load] += t.task_load;
+        tasks[rank_with_min_load].push_back({ t.i, t.j, t.task_id });
+        
+        task_id++;
     }
 
     end = GetTimeStamp();
     cout << "33333333 " << end - start << endl;
     start = GetTimeStamp();
+    unsigned long long total_cells = 0;
+    for (int i = 0; i < size; i++) {
+        total_cells +- rank_load[i];
+    }
+    unsigned long long cells_per_proccess = total_cells / size;
+    for (int i = 0; i < size; i++) {
+        cout << "    rank: " << i << " with task load: " << rank_load[i] << "/" << cells_per_proccess << endl;
+    }
 
     int i_max_length = -1, j_max_length = -1;
     for (int z = 0; z < tasks[0].size(); z++) {
@@ -414,8 +433,8 @@ void do_MPI_task(int rank) {
     int total = k * (k-1) / 2;
 
     // number of dp matrix calculation per process
-    int tasks_per_process = (int) floor((1.0*total) / size);
-    int my_tasks_start = tasks_per_process * (rank-1), my_tasks_end = tasks_per_process * rank;
+    // int tasks_per_process = (int) floor((1.0*total) / size);
+    // int my_tasks_start = tasks_per_process * (rank-1), my_tasks_end = tasks_per_process * rank;
 
     // cout << "rank[" << rank << "] done task allocation " << n_threads << endl;
     int local_genes_len[k];
@@ -436,19 +455,23 @@ void do_MPI_task(int rank) {
 
     
 
+    // ask root for the genes needed for calculation
     int task_id = 0;
     // calculate calculation cells in each task and distribute evenly
-    unsigned long long n_cells[total];
-    unsigned long long total_cells = 0;
+    // unsigned long long total_cells = 0;
+    priority_queue<Task, vector<Task>, task_cmp> task_pq;
     for(int i=1;i<k;i++){
 		for(int j=0;j<i;j++){
-            n_cells[task_id] = ((long) local_genes_len[i]) * ((long) local_genes_len[j]);
-            total_cells += n_cells[task_id];
+            Task t;
+            t.i = i;
+            t.j = j;
+            t.task_id = task_id;
+            t.task_load = local_genes_len[i]  * local_genes_len[j];
+            task_pq.push(t);
             task_id++;
         }
     }
 
-    unsigned long long cells_per_proccess = total_cells / size;
     vector<Triple> tasks[size]; // i, j, id of (i, j) in whole tasks
     task_id = 0;
     // int task_rank_mapping[total];
@@ -456,18 +479,25 @@ void do_MPI_task(int rank) {
     for (int i = 0; i < size; i++) {
         rank_load[i] = 0;
     }
-    for(int i=1;i<k;i++){
-		for(int j=0;j<i;j++){
-            // make rank 0 as minimum task load as possible
-            for (int r = size-1; r >= 0; r-- ) {
-                // load task to rank
-                if (rank_load[r] + n_cells[task_id] <= cells_per_proccess) {
-                    rank_load[r] += n_cells[task_id];
-                    tasks[r].push_back({ i, j, task_id });
-                }
+    while (!task_pq.empty()) {
+        Task t = task_pq.pop();
+        task_pq.pop();
+        
+        int rank_with_min_load = 0;
+        // unsigned long long tmp = rank_load[rank_with_min_load];
+
+        // make rank 0 as minimum task load as possible
+        for (int r = size-1; r > 0; r-- ) {
+            // find the rank with min task load
+            if (rank_load[r] < rank_load[rank_with_min_load]) {
+                rank_with_min_load = r;
             }
-            task_id++;
         }
+        // load task to rank with min load
+        rank_load[rank_with_min_load] += t.task_load;
+        tasks[rank_with_min_load].push_back({ t.i, t.j, t.task_id });
+        
+        task_id++;
     }
 
     int i_max_length = -1, j_max_length = -1;
