@@ -224,15 +224,20 @@ std::string getMinimumPenalties(std::string *genes,
     }
     for(int i=1;i<k;i++){
 		for(int j=0;j<i;j++){
+            int rank_with_min_load = 0;
+            // unsigned long long tmp = rank_load[rank_with_min_load];
+
             // make rank 0 as minimum task load as possible
-            for (int r = size-1; r >= 0; r-- ) {
-                // load task to rank
-                if (rank_load[r] + n_cells[task_id] <= cells_per_proccess) {
-                    rank_load[r] += n_cells[task_id];
-                    tasks[r].push_back({ i, j, task_id });
-                    break;
+            for (int r = size-1; r > 0; r-- ) {
+                // find the rank with min task load
+                if (rank_load[r] < rank_load[rank_with_min_load]) {
+                    rank_with_min_load = r;
                 }
             }
+            // load task to rank with min load
+            rank_load[rank_with_min_load] += n_cells[task_id];
+            tasks[rank_with_min_load].push_back({ i, j, task_id });
+            
             task_id++;
         }
     }
