@@ -234,7 +234,7 @@ std::string getMinimumPenalties(std::string *genes,
         rank_load[i] = 0;
     }
     while (!task_pq.empty()) {
-        Task t = task_pq.pop();
+        Task t = task_pq.top();
         task_pq.pop();
         
         int rank_with_min_load = 0;
@@ -481,7 +481,7 @@ void do_MPI_task(int rank) {
         rank_load[i] = 0;
     }
     while (!task_pq.empty()) {
-        Task t = task_pq.pop();
+        Task t = task_pq.top();
         task_pq.pop();
         
         int rank_with_min_load = 0;
