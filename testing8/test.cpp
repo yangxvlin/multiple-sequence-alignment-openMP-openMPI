@@ -84,6 +84,7 @@ int main(int argc, char **argv){
 #include <set>
 #include <unordered_set>
 #include <vector>
+#include <queue>
 #include <algorithm>    // std::sort
 
 // uncomment to enable debug
