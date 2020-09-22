@@ -106,7 +106,7 @@ struct Triple {
 struct Task {
     int i, j, task_id;
     unsigned long long task_load;
-}
+};
 struct task_cmp {
     bool operator()(const Task & a, const Task & b) {
         return a.task_load > b.task_load;
