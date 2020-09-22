@@ -259,7 +259,7 @@ std::string getMinimumPenalties(std::string *genes,
     start = GetTimeStamp();
     unsigned long long total_cells = 0;
     for (int i = 0; i < size; i++) {
-        total_cells +- rank_load[i];
+        total_cells += rank_load[i];
     }
     unsigned long long cells_per_proccess = total_cells / size;
     for (int i = 0; i < size; i++) {
