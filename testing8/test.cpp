@@ -230,6 +230,7 @@ std::string getMinimumPenalties(std::string *genes,
                 if (rank_load[r] + n_cells[task_id] <= cells_per_proccess) {
                     rank_load[r] += n_cells[task_id];
                     tasks[r].push_back({ i, j, task_id });
+                    break;
                 }
             }
             task_id++;
