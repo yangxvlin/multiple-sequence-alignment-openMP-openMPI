@@ -627,7 +627,7 @@ int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, int *xan
     // calcuting the minimum penalty
     
     // Tile parallel
-    int n_parallel = n_threads + (int (floor((1.0 * n_threads) / 3)));
+    int n_parallel = n_threads;
     // calculate tile size
     int tile_width  = (int) ceil((1.0*m) / n_parallel), 
         tile_length = (int) ceil((1.0*n) / n_parallel);
