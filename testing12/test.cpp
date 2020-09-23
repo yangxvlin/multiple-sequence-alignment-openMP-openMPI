@@ -199,7 +199,6 @@ std::string getMinimumPenalties(std::string *genes,
 
     // load remaining tasks
     priority_queue<Task, vector<Task>, task_cost_cmp> remaining_tasks;
-    int n_remaining_tasks = total - n_workers;
     int task_id = 0;
     int i_approx, j_approx;
     for(int i=1;i<k;i++){
@@ -225,7 +224,7 @@ std::string getMinimumPenalties(std::string *genes,
     task_id = 0;
     string answers_hash[total];
     int i_j_task_id[3];
-    for (int t = 0; t < n_remaining_tasks; t++) {
+    for (int t = 0; t < total; t++) {
         // recv task id
         MPI_Recv(&task_id, 1, MPI_INT, MPI_ANY_SOURCE, collect_results_tag, comm, &status);
         task_source = status.MPI_SOURCE;
