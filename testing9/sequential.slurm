@@ -8,7 +8,7 @@
 #SBATCH --job-name=sequential
 #SBATCH --cpus-per-task=1 
 #SBATCH --ntasks-per-node=1
-#SBATCH --partition=physical    
+#SBATCH --partition=snowy    
 # You need to load a compiler before openmpi.
 
 module load gcc/8.3.0
