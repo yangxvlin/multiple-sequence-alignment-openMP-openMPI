@@ -317,7 +317,7 @@ void do_MPI_task(int rank) {
             if (task_id == rank) {
                 task.x = i;
                 task.y = j;
-                task.z = task_id;
+                task.z = task_id - 1;
                 flag = false;
                 has_more_work = true;
                 break;
