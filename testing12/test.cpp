@@ -328,6 +328,7 @@ void do_MPI_task(int rank) {
     // worker works
     int i, j, l, task_penalty;
     int i_j_task_id[3];
+    uint64_t start, end;
     while (has_more_work) {
         // do initial default task
         if (n_tasks_done == 0) {
@@ -347,6 +348,7 @@ void do_MPI_task(int rank) {
         }
         
         // do task: sequence alignment calculation
+        start = GetTimeStamp();
         int l = local_genes_len[i] + local_genes_len[j];
         int xans[l+1], yans[l+1];
         task_penalty = getMinimumPenalty2(local_genes[i], local_genes[j], pxy, pgap, xans, yans, local_genes_len[i], local_genes_len[j]);
@@ -373,6 +375,9 @@ void do_MPI_task(int rank) {
         std::string align1hash = sw::sha512::calculate(align1);
         std::string align2hash = sw::sha512::calculate(align2);
         std::string problemhash = sw::sha512::calculate(align1hash.append(align2hash));
+
+        end = GetTimeStamp();
+        cout << "rank[" << rank << "] does task: " << task_id << "(" << i << ", " << j << ") with time: " << end - start  << endl;
         
         MPI_Send(&task_id, 1, MPI_INT, root, collect_results_tag, comm);
         MPI_Send(&task_penalty, 1, MPI_INT, root, collect_results_tag2, comm);
