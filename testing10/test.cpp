@@ -164,7 +164,8 @@ std::string getMinimumPenalties(std::string *genes,
     uint64_t start = GetTimeStamp();
 
     MPI_Status status;
-    int n_threads = omp_get_max_threads();
+    // int n_threads = omp_get_max_threads();
+    int n_threads = 16;
     // cout << "rank[" << 0 << "] has threads: " << n_threads << endl;
     omp_set_num_threads(n_threads);
 	int probNum=0;
