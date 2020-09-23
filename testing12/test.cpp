@@ -114,7 +114,7 @@ struct Task {
 struct task_cost_cmp {
     bool operator()(const Task & a, const Task & b) {
         // largest comes first
-        return a.task_cost > b.task_cost;
+        return a.task_cost < b.task_cost;
     }
 };
 
@@ -169,86 +169,6 @@ std::string getMinimumPenalties(std::string *genes,
     // cout << "rank[" << 0 << "] has threads: " << n_threads << endl;
     omp_set_num_threads(n_threads);
 
-    map< pair<int, int> , float> cost_map;
-    cost_map[{ 30000,90000 }] = 2685443;
-    cost_map[{ 50000,90000 }] = 3368568;
-    cost_map[{ 40000,90000 }] = 3820399;
-    cost_map[{ 45000,90000 }] = 4346901;
-    cost_map[{ 35000,90000 }] = 4562313;
-    cost_map[{ 55000,90000 }] = 4661260;
-    cost_map[{ 80000,90000 }] = 6844260;
-    cost_map[{ 85000,90000 }] = 6981953;
-    cost_map[{ 45000,80000 }] = 3689918;
-    cost_map[{ 80000,85000 }] = 5879212;
-    cost_map[{ 45000,85000 }] = 5238173;
-    cost_map[{ 70000,90000 }] = 7109908;
-    cost_map[{ 40000,80000 }] = 3401441;
-    cost_map[{ 65000,90000 }] = 6808658;
-    cost_map[{ 75000,90000 }] = 6519042;
-    cost_map[{ 60000,90000 }] = 4448726;
-    cost_map[{ 65000,85000 }] = 4963178;
-    cost_map[{ 50000,85000 }] = 3186950;
-    cost_map[{ 35000,80000 }] = 2946756;
-    cost_map[{ 35000,85000 }] = 3278903;
-    cost_map[{ 40000,85000 }] = 2614118;
-    cost_map[{ 50000,80000 }] = 5846400;
-    cost_map[{ 55000,85000 }] = 3484993;
-    cost_map[{ 30000,85000 }] = 1898632;
-    cost_map[{ 75000,80000 }] = 5859720;
-    cost_map[{ 75000,85000 }] = 5759294;
-    cost_map[{ 70000,85000 }] = 6523608;
-    cost_map[{ 60000,85000 }] = 5030286;
-    cost_map[{ 35000,70000 }] = 1929892;
-    cost_map[{ 35000,75000 }] = 2018626;
-    cost_map[{ 30000,80000 }] = 1753262;
-    cost_map[{ 45000,70000 }] = 2455557;
-    cost_map[{ 30000,75000 }] = 1781182;
-    cost_map[{ 70000,80000 }] = 6568076;
-    cost_map[{ 60000,80000 }] = 3963122;
-    cost_map[{ 45000,75000 }] = 3679246;
-    cost_map[{ 55000,80000 }] = 6485492;
-    cost_map[{ 45000,65000 }] = 2335015;
-    cost_map[{ 65000,75000 }] = 4239867;
-    cost_map[{ 65000,80000 }] = 5710165;
-    cost_map[{ 40000,75000 }] = 2232920;
-    cost_map[{ 30000,70000 }] = 2422724;
-    cost_map[{ 60000,70000 }] = 3866669;
-    cost_map[{ 55000,60000 }] = 2493375;
-    cost_map[{ 55000,70000 }] = 3112889;
-    cost_map[{ 30000,65000 }] = 1572207;
-    cost_map[{ 40000,70000 }] = 4042016;
-    cost_map[{ 30000,50000 }] = 1193198;
-    cost_map[{ 60000,75000 }] = 5065149;
-    cost_map[{ 50000,75000 }] = 3796500;
-    cost_map[{ 65000,70000 }] = 3830619;
-    cost_map[{ 50000,70000 }] = 4017638;
-    cost_map[{ 45000,60000 }] = 1803092;
-    cost_map[{ 35000,55000 }] = 1619453;
-    cost_map[{ 40000,45000 }] = 1463394;
-    cost_map[{ 30000,60000 }] = 1373043;
-    cost_map[{ 35000,60000 }] = 1986794;
-    cost_map[{ 30000,55000 }] = 1358983;
-    cost_map[{ 50000,55000 }] = 2037774;
-    cost_map[{ 35000,40000 }] = 1200278;
-    cost_map[{ 35000,65000 }] = 2752363;
-    cost_map[{ 40000,65000 }] = 1749777;
-    cost_map[{ 60000,65000 }] = 4368559;
-    cost_map[{ 40000,55000 }] = 1577821;
-    cost_map[{ 55000,65000 }] = 3613808;
-    cost_map[{ 30000,40000 }] = 1004363;
-    cost_map[{ 50000,60000 }] = 3488488;
-    cost_map[{ 70000,75000 }] = 7632558;
-    cost_map[{ 50000,65000 }] = 3547563;
-    cost_map[{ 45000,50000 }] = 2376754;
-    cost_map[{ 30000,35000 }] = 949612 ;
-    cost_map[{ 35000,50000 }] = 1813099;
-    cost_map[{ 45000,55000 }] = 2995864;
-    cost_map[{ 30000,45000 }] = 1276153;
-    cost_map[{ 35000,45000 }] = 1731105;
-    cost_map[{ 55000,75000 }] = 5984097;
-    cost_map[{ 40000,60000 }] = 3623866;
-    cost_map[{ 40000,50000 }] = 2949727;
-
     // number of processes
     int size;
     MPI_Comm_size(comm, &size);
@@ -263,10 +183,8 @@ std::string getMinimumPenalties(std::string *genes,
     int total = k * (k-1) / 2;
     // calculates string length
     int genes_length[k];
-    int genes_approx_length[k];
     for (int i = 0; i < k; i++) {
         genes_length[i] = genes[i].length();
-        genes_approx_length[i] = genes_length[i] / 5000 * 5000;
     }
     // broadcast strings length to wrokers
     MPI_Bcast(genes_length, k, MPI_INT, root, comm);
@@ -292,9 +210,9 @@ std::string getMinimumPenalties(std::string *genes,
                 t.i = i;
                 t.j = j;
                 t.task_id = task_id;
-                i_approx = max(genes_approx_length[i], 30000);
-                j_approx = max(genes_approx_length[j], 35000);
-                t.task_cost = cost_map[{ i_approx, j_approx }];
+                // i_approx = max(genes_approx_length[i], 30000);
+                // j_approx = max(genes_approx_length[j], 35000);
+                t.task_cost = (genes_length[i] / 1000) * (genes_length[j] / 1000);
                 remaining_tasks.push(t);
             }
             task_id++;
