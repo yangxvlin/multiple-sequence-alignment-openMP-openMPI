@@ -121,6 +121,7 @@ std::string getMinimumPenalties(std::string *genes, int k, int pxy, int pgap,
 	std::string alignmentHash="";
 	for(int i=1;i<k;i++){
 		for(int j=0;j<i;j++){
+			uint64_t start = GetTimeStamp();
 			std::string gene1 = genes[i];
 			std::string gene2 = genes[j];
 			int m = gene1.length(); // length of gene1
@@ -167,7 +168,8 @@ std::string getMinimumPenalties(std::string *genes, int k, int pxy, int pgap,
 			// cout << ">("<< problemhash.size() <<") " << problemhash << endl;
 			// cout << alignmentHash << endl;
 			// std::cout << std::endl;
-
+			uint64_t end = GetTimeStamp();
+			cout << probNum << ", " << i << ", " << j << ", " << gene1.size() << ", " << gene2.size() << ", " << end - start << endl;
 			probNum++;
 		}
 	}
