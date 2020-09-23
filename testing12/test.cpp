@@ -165,7 +165,7 @@ std::string getMinimumPenalties(std::string *genes,
                                        int pxy, 
                                        int pgap,
 	                                   int *penalties) {
-    int n_threads = omp_get_max_threads();
+    int n_threads = 16;
     // cout << "rank[" << 0 << "] has threads: " << n_threads << endl;
     omp_set_num_threads(n_threads);
 
@@ -271,7 +271,7 @@ std::string getMinimumPenalties(std::string *genes,
 // called for all tasks with rank!=root
 // do stuff for each MPI task based on rank
 void do_MPI_task(int rank) {
-    int n_threads = omp_get_max_threads();
+    int n_threads = 16;
     // cout << "rank[" << rank << "] has threads: " << n_threads << endl;
     omp_set_num_threads(n_threads);
     MPI_Status status;
@@ -383,7 +383,7 @@ void do_MPI_task(int rank) {
 
 int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, int *xans, int *yans, int m, int n) {
 	int i, j; // intialising variables
-    int n_threads = omp_get_max_threads();
+    int n_threads = 16;
 
     // int m = x.length(); // length of gene1
     // int n = y.length(); // length of gene2
