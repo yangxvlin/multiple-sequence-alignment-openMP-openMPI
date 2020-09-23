@@ -294,7 +294,7 @@ std::string getMinimumPenalties(std::string *genes,
                 t.task_id = task_id;
                 i_approx = max(genes_approx_length[i], 30000);
                 j_approx = max(genes_approx_length[j], 35000);
-                t.task_cost = cost_map[{ ,  }];
+                t.task_cost = cost_map[{ i_approx, j_approx }];
                 remaining_tasks.push(t);
             }
             task_id++;
