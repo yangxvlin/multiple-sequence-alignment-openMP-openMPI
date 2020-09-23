@@ -266,7 +266,7 @@ std::string getMinimumPenalties(std::string *genes,
     int genes_approx_length[k];
     for (int i = 0; i < k; i++) {
         genes_length[i] = genes[i].length();
-        genes_approx_length[i] = max(genes_length[i] / 5000 * 5000 , 30000);
+        genes_approx_length[i] = genes_length[i] / 5000 * 5000;
     }
     // broadcast strings length to wrokers
     MPI_Bcast(genes_length, k, MPI_INT, root, comm);
@@ -283,6 +283,7 @@ std::string getMinimumPenalties(std::string *genes,
     priority_queue<Task, vector<Task>, task_cost_cmp> remaining_tasks;
     int n_remaining_tasks = total - n_workers;
     int task_id = 0;
+    int i_approx, j_approx;
     for(int i=1;i<k;i++){
 		for(int j=0;j<i;j++){
             // worker's default tasks ignored
@@ -291,7 +292,9 @@ std::string getMinimumPenalties(std::string *genes,
                 t.i = i;
                 t.j = j;
                 t.task_id = task_id;
-                t.task_cost = cost_map[{ genes_approx_length[i], genes_approx_length[j] }];
+                i_approx = max(genes_approx_length[i], 30000);
+                j_approx = max(genes_approx_length[j], 35000);
+                t.task_cost = cost_map[{ ,  }];
                 remaining_tasks.push(t);
             }
             task_id++;
