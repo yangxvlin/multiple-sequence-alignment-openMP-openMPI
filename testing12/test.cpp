@@ -235,7 +235,7 @@ std::string getMinimumPenalties(std::string *genes,
         char answer_buffer[sha512_strlen];
         MPI_Recv(answer_buffer, 128, MPI_CHAR, task_source, collect_results_tag3, comm, &status);
         answers_hash[task_id] = string(answer_buffer, 128);
-        cout << "rank[0] from rank[" << task_source << "]: task id: " << task_id << ", penalty: " << task_penalty << ", hash: " << answers_hash[task_id] << endl;
+        // cout << "rank[0] from rank[" << task_source << "]: task id: " << task_id << ", penalty: " << task_penalty << ", hash: " << answers_hash[task_id] << endl;
 
         // has tasak for worker
         if (!remaining_tasks.empty()) {
@@ -252,7 +252,7 @@ std::string getMinimumPenalties(std::string *genes,
             i_j_task_id[1] = -1;
             i_j_task_id[2] = -1;
             MPI_Send(i_j_task_id, 3, MPI_INT, task_source, new_task_flag, comm);
-            cout << "rank[0] no more task for rank[" << task_source << endl;
+            // cout << "rank[0] no more task for rank[" << task_source << endl;
         }
     }
 
@@ -329,6 +329,7 @@ void do_MPI_task(int rank) {
     int i, j, l, task_penalty;
     int i_j_task_id[3];
     uint64_t start, end;
+    start = GetTimeStamp();
     while (has_more_work) {
         // do initial default task
         if (n_tasks_done == 0) {
@@ -348,7 +349,6 @@ void do_MPI_task(int rank) {
         }
         
         // do task: sequence alignment calculation
-        start = GetTimeStamp();
         int l = local_genes_len[i] + local_genes_len[j];
         int xans[l+1], yans[l+1];
         task_penalty = getMinimumPenalty2(local_genes[i], local_genes[j], pxy, pgap, xans, yans, local_genes_len[i], local_genes_len[j]);
@@ -376,14 +376,15 @@ void do_MPI_task(int rank) {
         std::string align2hash = sw::sha512::calculate(align2);
         std::string problemhash = sw::sha512::calculate(align1hash.append(align2hash));
 
-        end = GetTimeStamp();
-        cout << "rank[" << rank << "] does task: " << task_id << "(" << i << ", " << j << ") with time: " << end - start  << endl;
         
         MPI_Send(&task_id, 1, MPI_INT, root, collect_results_tag, comm);
         MPI_Send(&task_penalty, 1, MPI_INT, root, collect_results_tag2, comm);
         MPI_Send(problemhash.c_str(), 128, MPI_CHAR, root, collect_results_tag3, comm);
         n_tasks_done++;
     }
+    end = GetTimeStamp();
+    cout << "rank[" << rank << "] computes: " <<  end - start  << endl;
+    // cout << "rank[" << rank << "] does task: " << task_id << "(" << i << ", " << j << ") with time: " << end - start  << endl;
 }
 
 int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, int *xans, int *yans, int m, int n) {
