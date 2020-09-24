@@ -514,34 +514,24 @@ inline int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, i
     int ypos = l;
 
     while (!(i == 0 || j == 0)) {
-
         if (x[i - 1] == y[j - 1]) {
-            xans[xpos--] = (int) x[--i];
-            yans[ypos--] = (int) y[--j];
-            // xans[xpos--] = (int) x[i - 1];
-            // yans[ypos--] = (int) y[j - 1];
-            // i--;
-            // j--;
+            xans[xpos--] = (int)x[i - 1];
+            yans[ypos--] = (int)y[j - 1];
+            i--;
+            j--;
         } else if (dp[i - 1][j - 1] + pxy == dp[i][j]) {
-            xans[xpos--] = (int) x[--i];
-            yans[ypos--] = (int) y[--j];
-            // xans[xpos--] = (int) x[i - 1];
-            // yans[ypos--] = (int) y[j - 1];
-            // i--;
-            // j--;
+            xans[xpos--] = (int)x[i - 1];
+            yans[ypos--] = (int)y[j - 1];
+            i--;
+            j--;
         } else if (dp[i - 1][j] + pgap == dp[i][j]) {
-            xans[xpos--] = (int) x[--i];
-            yans[ypos--] = (int) '_';
-            // xans[xpos--] = (int) x[i - 1];
-            // yans[ypos--] = (int) '_';
-            // i--;
-        // } else if (dp[i][j - 1] + pgap == dp[i][j]) {
+            xans[xpos--] = (int)x[i - 1];
+            yans[ypos--] = (int)'_';
+            i--;
         } else {
-            xans[xpos--] = (int) '_';
-            yans[ypos--] = (int) y[--j];
-            // xans[xpos--] = (int) '_';
-            // yans[ypos--] = (int) y[j - 1];
-            // j--;
+            xans[xpos--] = (int)'_';
+            yans[ypos--] = (int)y[j - 1];
+            j--;
         }
     }
     
