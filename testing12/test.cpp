@@ -267,7 +267,7 @@ std::string getMinimumPenalties(std::string *genes,
         case 0:
             uint64_t start, end;
             start = GetTimeStamp();
-            int task_id;
+            int task_id, task_penalty, i_j_task_id[3];
             while (has_more_work) {
                 if (n_task_done == 0) {
                     i = 1;
