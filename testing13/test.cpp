@@ -314,7 +314,7 @@ inline std::string getMinimumPenalties(std::string *genes,
             for (int i = 0; i < total; i++) {
                 Packet task_result;
                 MPI_Recv(&task_result, 1, MPI_Packet, MPI_ANY_SOURCE, COLLECT_RESULT_TAG, comm, &status);
-                answers.push_back(task_result);
+                // answers.push_back(task_result);
                 penalties[task_result.task_id] = task_result.task_penalty;
                 answers_hash[task_result.task_id] = task_result.task_hash;
                 // cout << "rank[0] from rank[" << status.MPI_SOURCE << "]: task id: " << task_result.task_id << ", penalty: " << task_result.task_penalty << endl;
