@@ -95,15 +95,15 @@ int main(int argc, char **argv){
 int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, int *xans, int *yans, int m, int n);
 
 int n_threads = 16;
-const int SHA512_STRLEN = 129; // 128+1 for '\0'
+constexpr int SHA512_STRLEN = 129; // 128+1 for '\0'
 
-const int NO_MORE_TASK = -1;
-const int ask_for_genes_tag = 1;
-const int send_genes_tag = 2;
-const int COLLECT_RESULT_TAG = 3;
-const int COLLECT_RESULT_TAG2 = 4;
-const int COLLECT_RESULT_TAG3 = 5;
-const int NEW_TASK_FLAG = 6;
+constexpr int NO_MORE_TASK = -1;
+constexpr int ask_for_genes_tag = 1;
+constexpr int send_genes_tag = 2;
+constexpr int COLLECT_RESULT_TAG = 3;
+constexpr int COLLECT_RESULT_TAG2 = 4;
+constexpr int COLLECT_RESULT_TAG3 = 5;
+constexpr int NEW_TASK_FLAG = 6;
 
 struct Triple { 
    int x, y, z; 
