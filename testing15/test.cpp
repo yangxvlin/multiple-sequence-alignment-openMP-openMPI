@@ -277,7 +277,6 @@ inline std::string getMinimumPenalties(std::string *genes,
 
     // cout << "111111" << endl;
     // master's dynamic task control
-    // vector<Packet> answers;
     #pragma omp parallel num_threads(2)
     {
         MPI_Status status;
@@ -311,6 +310,7 @@ inline std::string getMinimumPenalties(std::string *genes,
             }
 
             Packet answers[total];
+            // vector<Packet> answers;
             for (int i = 0; i < total; i++) {
                 Packet task_result;
                 MPI_Recv(&task_result, 1, MPI_Packet, MPI_ANY_SOURCE, COLLECT_RESULT_TAG, comm, &status);
@@ -351,23 +351,15 @@ inline std::string getMinimumPenalties(std::string *genes,
         } else {
             // uint64_t start, end;
             // start = GetTimeStamp();
-            int i, j;
-            // initial task
             Triple task;
-            MPI_Recv(&task, 1, MPI_Triple, root, NEW_TASK_FLAG, comm, &status);
-            // i = task.x;
-            // j = task.y;
-            // task_id = task.z;
-
-            while (task.z != NO_MORE_TASK) {
+            do {
+                MPI_Recv(&task, 1, MPI_Triple, root, NEW_TASK_FLAG, comm, &status);
+                if (task.z == NO_MORE_TASK) {
+                    break;
+                }
                 Packet p = do_task(genes[task.x], genes[task.y], task.z, pxy, pgap, genes_length[task.x], genes_length[task.y]);
                 MPI_Send(&p, 1, MPI_Packet, root, COLLECT_RESULT_TAG, comm);
-                // cout << "rank[0] done task id: " << p.task_id << ", penalty: " << p.task_penalty << endl;
-                MPI_Recv(&task, 1, MPI_Triple, root, NEW_TASK_FLAG, comm, &status);
-                // i = task.x;
-                // j = task.y;
-                // task_id = task.z;
-            }
+            } while (true)
 
             // end = GetTimeStamp();
             // cout << "rank[" << 0 << "] computes: " <<  end - start  << endl;
