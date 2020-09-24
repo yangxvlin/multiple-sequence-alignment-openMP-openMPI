@@ -243,6 +243,7 @@ inline std::string getMinimumPenalties(std::string *genes,
                                        int pxy, 
                                        int pgap,
 	                                   int *penalties) {
+    std::string alignmentHash="";
     n_threads--;
     // number of processes
     int size;
@@ -263,21 +264,11 @@ inline std::string getMinimumPenalties(std::string *genes,
     MPI_Bcast(genes_length, k, MPI_INT, root, comm);
 
     // broadcast strings to wrokers
-    int max_gene_len = *std::max_element(genes_length, genes_length + k) + 1;
-    char str_buffer[max_gene_len];
+    // int max_gene_len = *std::max_element(genes_length, genes_length + k) + 1;
     for (int i = 0; i < k; i++) {
+        char str_buffer[genes_length[i]];
         memcpy(str_buffer, genes[i].c_str(), genes_length[i]);
         MPI_Bcast(str_buffer, genes_length[i], MPI_CHAR, root, comm);
-    }
-
-    // load tasks
-    queue<Triple> tasks;
-    int task_id = 0;
-    for(int i=1;i<k;i++){
-		for(int j=0;j<i;j++){
-            tasks.push({ i, j, task_id });
-            task_id++;
-        }
     }
 
     MPI_Datatype MPI_Packet = create_MPI_Packet();
@@ -285,7 +276,7 @@ inline std::string getMinimumPenalties(std::string *genes,
 
     // cout << "111111" << endl;
     // master's dynamic task control
-    string answers_hash[total];
+    // string answers_hash[total];
     vector<Packet> answers;
     #pragma omp parallel num_threads(2)
     {
@@ -294,6 +285,16 @@ inline std::string getMinimumPenalties(std::string *genes,
         int task_penalty;
         
         if (omp_get_thread_num() == 0) {
+                // load tasks
+                queue<Triple> tasks;
+                int task_id = 0;
+                for(int i=1;i<k;i++){
+                    for(int j=0;j<i;j++){
+                        tasks.push({ i, j, task_id });
+                        task_id++;
+                    }
+                }
+
             // broadcast initial task
             for (int i = 0; i < size; i++) {
                 // send to worker i
@@ -330,7 +331,17 @@ inline std::string getMinimumPenalties(std::string *genes,
                 // send new task to worker
                 // cout << "rank[0] more task for rank[" << status.MPI_SOURCE << "]: task id:" << i_j_task_id[2] << " (" << i_j_task_id[0] << ", " << i_j_task_id[1] << ") " << endl;
             }
-        } else if (omp_get_thread_num() == 1) {
+
+                std::sort(answers.begin(), answers.end(), cmp_task_id);
+                
+                for (int i = 0; i < total; i++) {
+
+                    // aggregrate answers
+                    // alignmentHash = sw::sha512::calculate(alignmentHash.append(answers_hash[i]));
+                    alignmentHash = sw::sha512::calculate(alignmentHash.append(answers[i].task_hash));
+                    penalties[i] = answers[i].task_penalty;
+                }
+        } else {
             // uint64_t start, end;
             // start = GetTimeStamp();
             int i, j;
@@ -353,22 +364,10 @@ inline std::string getMinimumPenalties(std::string *genes,
 
             // end = GetTimeStamp();
             // cout << "rank[" << 0 << "] computes: " <<  end - start  << endl;
-        } else {
-            // cout << "rank[0] other thread" << endl;
         }
     }
 
     // cout << "77777777" << endl;
-
-    std::sort(answers.begin(), answers.end(), cmp_task_id);
-    std::string alignmentHash="";
-    for (int i = 0; i < total; i++) {
-
-        // aggregrate answers
-        // alignmentHash = sw::sha512::calculate(alignmentHash.append(answers_hash[i]));
-        alignmentHash = sw::sha512::calculate(alignmentHash.append(answers[i].task_hash));
-        penalties[i] = answers[i].task_penalty;
-    }
 
 	return alignmentHash;
 }
@@ -397,10 +396,10 @@ inline void do_MPI_task(int rank) {
     MPI_Bcast(genes_length, k, MPI_INT, root, comm);
     
     // broadcast strings from master
-    int max_gene_len = *std::max_element(genes_length, genes_length + k) + 1;
+    // int max_gene_len = *std::max_element(genes_length, genes_length + k) + 1;
     string genes[k];
     for (int i = 0; i < k; i++) {
-        char buffer[max_gene_len];
+        char buffer[genes_length[i] + 1];
         MPI_Bcast(buffer, genes_length[i], MPI_CHAR, root, comm);
         buffer[genes_length[i]] = '\0';
         genes[i] = string(buffer, genes_length[i]);
