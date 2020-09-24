@@ -312,6 +312,7 @@ inline std::string getMinimumPenalties(std::string *genes,
                     i_j_task_id[0] = tasks[cur_task].x;
                     i_j_task_id[1] = tasks[cur_task].y;
                     i_j_task_id[2] = tasks[cur_task].z;
+                    cur_task++;
                     // tasks.pop();
                 }
                 MPI_Send(&i_j_task_id, 3, MPI_INT, i, NEW_TASK_FLAG, comm);
@@ -339,6 +340,7 @@ inline std::string getMinimumPenalties(std::string *genes,
                     i_j_task_id[0] = tasks[cur_task].x;
                     i_j_task_id[1] = tasks[cur_task].y;
                     i_j_task_id[2] = tasks[cur_task].z;
+                    cur_task++;
                     // tasks.pop();
                 }
                 MPI_Send(&i_j_task_id, 3, MPI_INT, status.MPI_SOURCE, NEW_TASK_FLAG, comm);
