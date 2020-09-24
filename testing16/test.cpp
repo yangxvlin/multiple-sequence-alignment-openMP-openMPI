@@ -362,7 +362,7 @@ inline std::string getMinimumPenalties(std::string *genes,
             // start = GetTimeStamp();
             do {
                 // MPI_Recv(&task, 1, MPI_Triple, root, NEW_TASK_FLAG, comm, &status);
-                MPI_Recv(&i_j_task_id, 3, MPI_INT, root, NEW_TASK_FLAG, comm, &status);
+                MPI_Recv(i_j_task_id, 3, MPI_INT, root, NEW_TASK_FLAG, comm, &status);
                 if (i_j_task_id[2] == NO_MORE_TASK) {
                     break;
                 }
@@ -423,7 +423,7 @@ inline void do_MPI_task(int rank) {
     int i_j_task_id[3];
     do {
         // MPI_Recv(&task, 1, MPI_Triple, root, NEW_TASK_FLAG, comm, &status);
-        MPI_Recv(&i_j_task_id, 3, MPI_INT, root, NEW_TASK_FLAG, comm, &status);
+        MPI_Recv(i_j_task_id, 3, MPI_INT, root, NEW_TASK_FLAG, comm, &status);
         if (i_j_task_id[2] == NO_MORE_TASK) {
             break;
         }
