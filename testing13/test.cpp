@@ -325,8 +325,8 @@ std::string getMinimumPenalties(std::string *genes,
                 // cout << "rank[0] more task for rank[" << status.MPI_SOURCE << "]: task id:" << i_j_task_id[2] << " (" << i_j_task_id[0] << ", " << i_j_task_id[1] << ") " << endl;
             }
         } else if (omp_get_thread_num() == 1) {
-            uint64_t start, end;
-            start = GetTimeStamp();
+            // uint64_t start, end;
+            // start = GetTimeStamp();
             int i, j;
             // initial task
             Triple task;
@@ -345,8 +345,8 @@ std::string getMinimumPenalties(std::string *genes,
                 task_id = task.z;
             }
 
-            end = GetTimeStamp();
-            cout << "rank[" << 0 << "] computes: " <<  end - start  << endl;
+            // end = GetTimeStamp();
+            // cout << "rank[" << 0 << "] computes: " <<  end - start  << endl;
         } else {
             // cout << "rank[0] other thread" << endl;
         }
@@ -398,8 +398,8 @@ void do_MPI_task(int rank) {
     }
 
     
-    uint64_t start, end;
-    start = GetTimeStamp();
+    // uint64_t start, end;
+    // start = GetTimeStamp();
     // worker works
     MPI_Datatype MPI_Packet = create_MPI_Packet();
     MPI_Datatype MPI_Triple = create_MPI_Triple();
@@ -422,8 +422,8 @@ void do_MPI_task(int rank) {
         task_id = task.z;
     }
 
-    end = GetTimeStamp();
-    cout << "rank[" << rank << "] computes: " <<  end - start  << endl;
+    // end = GetTimeStamp();
+    // cout << "rank[" << rank << "] computes: " <<  end - start  << endl;
 }
 
 int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, int *xans, int *yans, int m, int n) {
