@@ -551,32 +551,29 @@ inline int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, i
     }
 
     omp_set_num_threads(omp_get_max_threads());
-    int x_diff = xpos - i, y_diff = ypos - j;
-    #pragma omp parallel for
-    for (int ii = i; ii > 0; --ii)
+    int x_offset = xpos - i, y_offset = ypos - j;
+    #pragma omp parallel 
     {
-        xans[ii + x_diff] = (int)x[ii - 1];
-    }
-
-    #pragma omp parallel for
-    for (int x_pos2 = xpos - i; x_pos2 > 0; --x_pos2)
-    {
-        xans[x_pos2] = (int)'_';
-    }
-
-    #pragma omp parallel for
-    for (int jj = j; jj > 0; --jj)
-    {
-        yans[jj + y_diff] = (int)y[jj - 1];
-        if (jj == 0)
+        #pragma omp for nowait
+        for (int ii = i; ii > 0; ii--)
         {
+            xans[ii + x_offset] = (int)x[ii - 1];
         }
-    }
 
-    #pragma omp parallel for
-    for (int y_pos2 = ypos - j; y_pos2 > 0; --y_pos2)
-    {
-        yans[y_pos2] = (int)'_';
+        #pragma omp for nowait
+        for (int x_pos2 = x_offset; x_pos2 > 0; x_pos2--) {
+            xans[x_pos2] = (int)'_';
+        }
+
+        #pragma omp for nowait
+        for (int jj = j; jj > 0; jj--) {
+            yans[jj + y_offset] = (int)y[jj - 1];
+        }
+
+        #pragma omp for nowait
+        for (int y_pos2 = y_offset; y_pos2 > 0; y_pos2--) {
+            yans[y_pos2] = (int)'_';
+        }
     }
 
     int ret = dp[m][n];
