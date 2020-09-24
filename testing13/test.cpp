@@ -270,7 +270,7 @@ std::string getMinimumPenalties(std::string *genes,
 
     MPI_Datatype MPI_Packet = create_MPI_Packet();
 
-    cout << "111111" << endl;
+    // cout << "111111" << endl;
     // master's dynamic task control
     string answers_hash[total];
     #pragma omp parallel num_threads(2)
@@ -304,7 +304,7 @@ std::string getMinimumPenalties(std::string *genes,
                 MPI_Recv(&task_result, 1, MPI_Packet, MPI_ANY_SOURCE, COLLECT_RESULT_TAG, comm, &status);
                 penalties[task_result.task_id] = task_result.task_penalty;
                 answers_hash[task_result.task_id] = task_result.task_hash;
-                cout << "rank[0] from rank[" << status.MPI_SOURCE << "]: task id: " << task_result.task_id << ", penalty: " << task_result.task_penalty << endl;
+                // cout << "rank[0] from rank[" << status.MPI_SOURCE << "]: task id: " << task_result.task_id << ", penalty: " << task_result.task_penalty << endl;
 
                 // no more task for worker
                 if (tasks.empty()) {
@@ -344,9 +344,9 @@ std::string getMinimumPenalties(std::string *genes,
             }
 
             end = GetTimeStamp();
-            cout << "rank[" << 0 << "] computes: " <<  end - start  << endl;
+            // cout << "rank[" << 0 << "] computes: " <<  end - start  << endl;
         } else {
-            cout << "rank[0] other thread" << endl;
+            // cout << "rank[0] other thread" << endl;
         }
     }
 
@@ -407,7 +407,7 @@ void do_MPI_task(int rank) {
     i = i_j_task_id[0];
     j = i_j_task_id[1];
     task_id = i_j_task_id[2];
-    cout << "rank[" << rank << "] new task: " << task_id << endl;
+    // cout << "rank[" << rank << "] new task: " << task_id << endl;
 
     while (task_id != NO_MORE_TASK) {
         Packet p = do_task(genes[i], genes[j], task_id, pxy, pgap, genes_length[i], genes_length[j]);
@@ -416,12 +416,11 @@ void do_MPI_task(int rank) {
         i = i_j_task_id[0];
         j = i_j_task_id[1];
         task_id = i_j_task_id[2];
-        cout << "rank[" << rank << "] new task: " << task_id << endl;
+        // cout << "rank[" << rank << "] new task: " << task_id << endl;
     }
 
     end = GetTimeStamp();
     cout << "rank[" << rank << "] computes: " <<  end - start  << endl;
-    // cout << "rank[" << rank << "] does task: " << task_id << "(" << i << ", " << j << ") with time: " << end - start  << endl;
 }
 
 int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, int *xans, int *yans, int m, int n) {
