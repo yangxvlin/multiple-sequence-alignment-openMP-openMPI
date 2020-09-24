@@ -410,23 +410,15 @@ inline void do_MPI_task(int rank) {
     MPI_Datatype MPI_Packet = create_MPI_Packet();
     MPI_Datatype MPI_Triple = create_MPI_Triple();
     MPI_Status status;
-    int i, j, task_id;
-    // initial task
     Triple task;
-    MPI_Recv(&task, 1, MPI_Triple, root, NEW_TASK_FLAG, comm, &status);
-    i = task.x;
-    j = task.y;
-    task_id = task.z;
-
-    while (task_id != NO_MORE_TASK) {
-        Packet p = do_task(genes[i], genes[j], task_id, pxy, pgap, genes_length[i], genes_length[j]);
-        MPI_Send(&p, 1, MPI_Packet, root, COLLECT_RESULT_TAG, comm);
-        // cout << "rank[0] done task id: " << p.task_id << ", penalty: " << p.task_penalty << endl;
+    do {
         MPI_Recv(&task, 1, MPI_Triple, root, NEW_TASK_FLAG, comm, &status);
-        i = task.x;
-        j = task.y;
-        task_id = task.z;
-    }
+        if (task.z == NO_MORE_TASK) {
+            break;
+        }
+        Packet p = do_task(genes[task.x], genes[task.y], task.z, pxy, pgap, genes_length[task.x], genes_length[task.y]);
+        MPI_Send(&p, 1, MPI_Packet, root, COLLECT_RESULT_TAG, comm);
+    } while (true);
 
     // end = GetTimeStamp();
     // cout << "rank[" << rank << "] computes: " <<  end - start  << endl;
