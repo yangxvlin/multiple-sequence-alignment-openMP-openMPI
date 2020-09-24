@@ -238,7 +238,7 @@ inline Packet do_task(std::string gene1, std::string gene2,
 // called by the root MPI task only
 // this procedure should distribute work to other MPI tasks
 // and put together results, etc.
-std::string getMinimumPenalties(std::string *genes, 
+inline std::string getMinimumPenalties(std::string *genes, 
                                        int k, 
                                        int pxy, 
                                        int pgap,
@@ -376,7 +376,7 @@ std::string getMinimumPenalties(std::string *genes,
 
 // called for all tasks with rank!=root
 // do stuff for each MPI task based on rank
-void do_MPI_task(int rank) {
+inline void do_MPI_task(int rank) {
     
     // number of processes
     int size;
@@ -435,7 +435,7 @@ void do_MPI_task(int rank) {
     // cout << "rank[" << rank << "] computes: " <<  end - start  << endl;
 }
 
-int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, int *xans, int *yans, int m, int n) {
+inline int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, int *xans, int *yans, int m, int n) {
 	int i, j; // intialising variables
     omp_set_num_threads(n_threads);
 
