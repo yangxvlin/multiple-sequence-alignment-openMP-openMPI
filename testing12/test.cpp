@@ -220,17 +220,15 @@ std::string getMinimumPenalties(std::string *genes,
     cout << "111111" << endl;
     // master's dynamic task control
     MPI_Status status;
-    int task_penalty, task_source;
     task_id = 0;
     string answers_hash[total];
-    int i_j_task_id[3];
-    int n_task_done = 0;
     // int i, j;
-    bool has_more_work = true;
     #pragma omp parallel
     {
         switch (omp_get_thread_num()) {
         case 15:
+            int task_penalty, task_source;
+            int i_j_task_id[3];
             for (int t = 0; t < total; t++) {
                 cout << "scheduler do: " << t << endl;
                 // recv task id
@@ -271,6 +269,8 @@ std::string getMinimumPenalties(std::string *genes,
         case 0:
             uint64_t start, end;
             start = GetTimeStamp();
+            int n_task_done = 0;
+            bool has_more_work = true;
             int task_id, task_penalty, i_j_task_id[3], i, j;
             while (has_more_work) {
                 if (n_task_done == 0) {
@@ -282,6 +282,7 @@ std::string getMinimumPenalties(std::string *genes,
                     i = i_j_task_id[0];
                     j = i_j_task_id[1];
                     task_id = i_j_task_id[2];
+                    cout << "rank[0] receive task id: " << task_id  <<endl;
                 }
 
                 if (task_id > -1) {
