@@ -333,15 +333,6 @@ inline std::string getMinimumPenalties(std::string *genes,
                 // cout << "rank[0] more task for rank[" << status.MPI_SOURCE << "]: task id:" << i_j_task_id[2] << " (" << i_j_task_id[0] << ", " << i_j_task_id[1] << ") " << endl;
             }
 
-                std::sort(answers.begin(), answers.end(), cmp_task_id);
-                
-                for (int i = 0; i < total; i++) {
-
-                    // aggregrate answers
-                    // alignmentHash = sw::sha512::calculate(alignmentHash.append(answers_hash[i]));
-                    alignmentHash = sw::sha512::calculate(alignmentHash.append(answers[i].task_hash));
-                    penalties[i] = answers[i].task_penalty;
-                }
         } else {
             // uint64_t start, end;
             // start = GetTimeStamp();
@@ -368,6 +359,15 @@ inline std::string getMinimumPenalties(std::string *genes,
         }
     }
 
+    std::sort(answers.begin(), answers.end(), cmp_task_id);
+    
+    for (int i = 0; i < total; i++) {
+
+        // aggregrate answers
+        // alignmentHash = sw::sha512::calculate(alignmentHash.append(answers_hash[i]));
+        alignmentHash = sw::sha512::calculate(alignmentHash.append(answers[i].task_hash));
+        penalties[i] = answers[i].task_penalty;
+    }
     // cout << "77777777" << endl;
 
 	return alignmentHash;
