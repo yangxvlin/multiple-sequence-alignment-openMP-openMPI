@@ -137,6 +137,10 @@ struct Packet {
     int task_id;
     char task_hash[SHA512_STRLEN];
 };
+inline bool cmp_task_id(const Packet &a, const Packet &b)
+{
+    return a.task_id < b.task_id;
+}
 inline MPI_Datatype create_MPI_Packet() {
     MPI_Datatype MPI_Packet;
     int blen[3];
@@ -282,6 +286,7 @@ std::string getMinimumPenalties(std::string *genes,
     // cout << "111111" << endl;
     // master's dynamic task control
     string answers_hash[total];
+    vector<Packet> answers;
     #pragma omp parallel num_threads(2)
     {
         MPI_Status status;
@@ -307,8 +312,9 @@ std::string getMinimumPenalties(std::string *genes,
             for (int i = 0; i < total; i++) {
                 Packet task_result;
                 MPI_Recv(&task_result, 1, MPI_Packet, MPI_ANY_SOURCE, COLLECT_RESULT_TAG, comm, &status);
-                penalties[task_result.task_id] = task_result.task_penalty;
-                answers_hash[task_result.task_id] = task_result.task_hash;
+                answers.push_back(task_result);
+                // penalties[task_result.task_id] = task_result.task_penalty;
+                // answers_hash[task_result.task_id] = task_result.task_hash;
                 // cout << "rank[0] from rank[" << status.MPI_SOURCE << "]: task id: " << task_result.task_id << ", penalty: " << task_result.task_penalty << endl;
 
                 // no more task for worker
@@ -354,11 +360,14 @@ std::string getMinimumPenalties(std::string *genes,
 
     // cout << "77777777" << endl;
 
+    std::sort(answers.begin(), answers.end(), cmp_task_id);
     std::string alignmentHash="";
     for (int i = 0; i < total; i++) {
 
         // aggregrate answers
-        alignmentHash = sw::sha512::calculate(alignmentHash.append(answers_hash[i]));
+        // alignmentHash = sw::sha512::calculate(alignmentHash.append(answers_hash[i]));
+        alignmentHash = sw::sha512::calculate(alignmentHash.append(answers[i].task_hash));
+        penalties[i] = answers[i].task_penalty;
     }
 
 	return alignmentHash;
