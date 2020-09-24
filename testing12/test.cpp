@@ -470,6 +470,7 @@ void do_MPI_task(int rank) {
 int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, int *xans, int *yans, int m, int n, int available_threads) {
 	int i, j; // intialising variables
     int n_threads = available_threads;
+    omp_set_num_threads(n_threads);
 
     // int m = x.length(); // length of gene1
     // int n = y.length(); // length of gene2
@@ -482,7 +483,7 @@ int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, int *xan
     //	memset (dp[0], 0, size);
 
     // intialising the table
-    #pragma omp parallel num_threads(available_threads)
+    #pragma omp parallel
     {
         #pragma omp for nowait
         for (int i = 0; i <= m; i++) {
@@ -515,7 +516,7 @@ int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, int *xan
         int count = min(line, min((num_tile_in_length - start_col), num_tile_in_width));
 
         // parallel each tile on anti-diagonal
-        #pragma omp parallel for num_threads(available_threads)
+        #pragma omp parallel for
         for (int z = 0; z < count; z++) {
             int tile_i_start = (min(num_tile_in_width, line)-z-1)*tile_width +1,
                 tile_j_start = (start_col+z)*tile_length +1;
@@ -577,34 +578,32 @@ int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, int *xan
         }
     }
     
-    while (xpos > 0) {
-		if (i > 0) xans[xpos--] = (int)x[--i];
-		else xans[xpos--] = (int)'_';
-	}
-	while (ypos > 0) {
-		if (j > 0) yans[ypos--] = (int)y[--j];
-		else yans[ypos--] = (int)'_';
-	}
+    // while (xpos > 0) {
+	// 	if (i > 0) xans[xpos--] = (int)x[--i];
+	// 	else xans[xpos--] = (int)'_';
+	// }
+	// while (ypos > 0) {
+	// 	if (j > 0) yans[ypos--] = (int)y[--j];
+	// 	else yans[ypos--] = (int)'_';
+	// }
 
-    // int x_diff = xpos - i, y_diff = ypos - j;
-    // #pragma omp parallel for num_threads(available_threads)
-    // for (int ii = i; ii>0; ii--){
-    //     xans[ii + x_diff] = (int)x[ii - 1];
-    // }
-    // #pragma omp parallel for num_threads(available_threads)
-    // for (int x_dash = x_diff; x_dash>0; x_dash--){
-    //     xans[x_dash] = (int)'_';
-    // }
-
-    // #pragma omp parallel for num_threads(available_threads)
-    // for (int jj = j; jj>0; jj--){
-    //     yans[jj + y_diff] = (int)y[jj - 1];
-    // }
-
-    // #pragma omp parallel for num_threads(available_threads)
-    // for (int y_dash = y_diff; y_dash>0; y_dash--){
-    //     yans[y_dash] = (int)'_';
-    // }
+    int x_diff = xpos - i, y_diff = ypos - j;
+    #pragma omp parallel for
+    for (int ii = i; ii>0; ii--){
+        xans[ii + x_diff] = (int)x[ii - 1];
+    }
+    #pragma omp parallel for
+    for (int x_dash = x_diff; x_dash>0; x_dash--){
+        xans[x_dash] = (int)'_';
+    }
+    #pragma omp parallel for
+    for (int jj = j; jj>0; jj--){
+        yans[jj + y_diff] = (int)y[jj - 1];
+    }
+    #pragma omp parallel for
+    for (int y_dash = y_diff; y_dash>0; y_dash--){
+        yans[y_dash] = (int)'_';
+    }
 
     int ret = dp[m][n];
 
