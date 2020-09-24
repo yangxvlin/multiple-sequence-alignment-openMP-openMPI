@@ -474,12 +474,9 @@ inline int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, i
     // modified from: https://www.geeksforgeeks.org/zigzag-or-diagonal-traversal-of-matrix/
     // There will be tile_width + num_tile_in_length-1 lines in the output
     for (int line = 1; line <= (num_tile_in_width + num_tile_in_length - 1); line++) {
-        /* Get column index of the first element in this line of output.
-           The index is 0 for first tile_width lines and line - tile_width for remaining
-           lines  */
-        int start_col = max(0, line - num_tile_in_width);
-        /* Get count of elements in this line. The count of elements is
-           equal to minimum of line number, num_tile_in_length-start_col and num_tile_in_width */
+        /* Get column index of the first element in this line of output. */
+        int start_col = max(0, line - num_tile_in_width) + 1;
+        /* Get count of elements in this line.  */
         int count = min(line, num_tile_in_width);
 
         #pragma omp parallel for
