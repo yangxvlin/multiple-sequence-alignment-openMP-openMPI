@@ -34,7 +34,8 @@ const int root = 0;
 // Driver code
 int main(int argc, char **argv){
 	int rank;
-	MPI_Init(&argc, &argv);
+	int prov;
+    MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &prov);
 	MPI_Comm_rank(comm, &rank);
 	if(rank==root){
 		int misMatchPenalty;
@@ -222,14 +223,14 @@ std::string getMinimumPenalties(std::string *genes,
     MPI_Status status;
     task_id = 0;
     string answers_hash[total];
-    #pragma omp parallel
+    #pragma omp parallel num_threads(2)
     {
         int n_task_done = 0;
         bool has_more_work = true;
         int task_penalty, i_j_task_id[3], i, j, task_source;
         int task_id;
         switch (omp_get_thread_num()) {
-        case 15:
+        case 1:
             for (int t = 0; t < total; t++) {
                 // cout << "scheduler do: " << t << endl;
                 // recv task id
