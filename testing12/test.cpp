@@ -222,11 +222,12 @@ std::string getMinimumPenalties(std::string *genes,
     MPI_Status status;
     task_id = 0;
     string answers_hash[total];
-    int n_task_done = 0;
-    bool has_more_work = true;
-    int task_penalty, i_j_task_id[3], i, j, task_source, abc[3];
     #pragma omp parallel
     {
+        int n_task_done = 0;
+        bool has_more_work = true;
+        int task_penalty, i_j_task_id[3], i, j, task_source, abc[3];
+        int task_id;
         switch (omp_get_thread_num()) {
         case 15:
             for (int t = 0; t < total; t++) {
