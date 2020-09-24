@@ -311,7 +311,7 @@ inline std::string getMinimumPenalties(std::string *genes,
                     i_j_task_id[2] = task.z;
                     tasks.pop();
                 }
-                MPI_Send(&i_j_task_id, 3, MPI_INT, i, NEW_TASK_FLAG, comm);
+                MPI_Send(i_j_task_id, 3, MPI_INT, i, NEW_TASK_FLAG, comm);
             }
 
             Packet answers[total];
@@ -338,7 +338,7 @@ inline std::string getMinimumPenalties(std::string *genes,
                     i_j_task_id[2] = task.z;
                     tasks.pop();
                 }
-                MPI_Send(&i_j_task_id, 3, MPI_INT, status.MPI_SOURCE, NEW_TASK_FLAG, comm);
+                MPI_Send(i_j_task_id, 3, MPI_INT, status.MPI_SOURCE, NEW_TASK_FLAG, comm);
                 // send new task to worker
                 // cout << "rank[0] more task for rank[" << status.MPI_SOURCE << "]: task id:" << i_j_task_id[2] << " (" << i_j_task_id[0] << ", " << i_j_task_id[1] << ") " << endl;
             }
