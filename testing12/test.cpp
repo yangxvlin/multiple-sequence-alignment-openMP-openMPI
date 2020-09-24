@@ -245,7 +245,7 @@ std::string getMinimumPenalties(std::string *genes,
             i_j_task_id[2] = t.task_id;
             remaining_tasks.pop();
             MPI_Send(i_j_task_id, 3, MPI_INT, task_source, new_task_flag, comm);
-            cout << "rank[0] more task for rank[" << task_source << "]: task id:" << t.task_id << " (" << t.i << ", " << t.j << ") " << "cost: " << t.task_cost << endl;
+            // cout << "rank[0] more task for rank[" << task_source << "]: task id:" << t.task_id << " (" << t.i << ", " << t.j << ") " << "cost: " << t.task_cost << endl;
         // no more task for worker
         } else {
             i_j_task_id[0] = -1;
