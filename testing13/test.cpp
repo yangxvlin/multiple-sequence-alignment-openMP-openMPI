@@ -443,72 +443,65 @@ inline int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, i
 
     // table for storing optimal substructure answers
     omp_set_num_threads(n_threads);
-    int **dp = new2d(m + 1, n + 1);
+    int row = m + 1;
+    int col = n + 1;
+    int **dp = new2d(row, col);
 
     // remove unnecessary memset
-    //    size_t size = m + 1;
-    //    size *= n + 1;
+    //    size_t size = row;
+    //    size *= col;
     //    memset (dp[0], 0, size);
 
     // intialising the table
-    #pragma omp parallel for
-    for (i = 0; i <= m; ++i)
+    #pragma omp parallel
     {
-        dp[i][0] = i * pgap;
+        #pragma omp for nowait
+        for (i = 0; i <= m; ++i) {
+            dp[i][0] = i * pgap;
+        }
+        #pragma omp for
+        for (i = 0; i <= n; ++i) {
+            dp[0][i] = i * pgap;
+        }
     }
-    #pragma omp parallel for
-    for (i = 0; i <= n; ++i)
-    {
-        dp[0][i] = i * pgap;
-    }
 
-    // calculating the minimum penalty with the tiling technique in an anti-diagonal version
-    int tile_row_size = (int)ceil((1.0 * m) / n_threads); // Number of dp elements in row of each tile
-    int tile_col_size = (int)ceil((1.0 * n) / n_threads); // Number of dp elements in column of each tile
+    // calculate tile size
+    int tile_width = (int)ceil((1.0 * m) / n_threads); 
+    int tile_length = (int)ceil((1.0 * n) / n_threads);
+    int num_tile_in_width = (int)ceil((1.0 * m) / tile_width);
+    int num_tile_in_length = (int)ceil((1.0 * n) / tile_length);
 
-    //    int tile_row_size = 256; // Number of dp elements in row of each tile
-    //    int tile_col_size = 256; // Number of dp elements in column of each tile
-    int tile_m = (int)ceil((1.0 * m) / tile_row_size); // Number of tiles in row of the dp matrix
-    int tile_n = (int)ceil((1.0 * n) / tile_col_size); // Number of tile in column of the dp matrix
-
-    int total_diagonal = tile_m + tile_n - 1;
-    int row_min, row_max, diagonal_index, k;
-    //    cout << "tile_row_size: " << tile_row_size << ", tile_col_size: " << tile_col_size << endl;
-    //    cout << "tile_m: " << tile_m << ", tile_n: " << tile_n << endl;
-    //    cout << "total_diagonal: " << total_diagonal << endl;
-    for (diagonal_index = 1; diagonal_index <= total_diagonal; ++diagonal_index)
-    {
-        row_min = max(1, diagonal_index - tile_n + 1);
-        row_max = min(diagonal_index, tile_m);
+    // modified from: https://www.geeksforgeeks.org/zigzag-or-diagonal-traversal-of-matrix/
+    // There will be tile_width + num_tile_in_length-1 lines in the output
+    for (int line = 1; line <= (num_tile_in_width + num_tile_in_length - 1); line++) {
+        /* Get column index of the first element in this line of output.
+           The index is 0 for first tile_width lines and line - tile_width for remaining
+           lines  */
+        int start_col = max(0, line - num_tile_in_width);
+        /* Get count of elements in this line. The count of elements is
+           equal to minimum of line number, num_tile_in_length-start_col and num_tile_in_width */
+        int count = min(line, num_tile_in_width);
 
         #pragma omp parallel for
-        for (k = row_min; k <= row_max; ++k)
-        {
-            int tile_row_start = 1 + (k - 1) * tile_row_size;              // index inclusive
-            int tile_row_end = min(tile_row_start + tile_row_size, m + 1); // index exclusive
-            int tile_col_start = 1 + (diagonal_index - k) * tile_col_size; // index inclusive
-            int tile_col_end = min(tile_col_start + tile_col_size, n + 1); // index exclusive
+        for (int z = start_col; z <= count; z++) {
+            int tile_i_start = (z - 1) * tile_width + 1;              
+            int tile_i_end = min(tile_i_start + tile_width, row); 
+            int tile_j_start = (line - z) * tile_length + 1; 
+            int tile_j_end = min(tile_j_start + tile_length, col); 
 
-            //            cout << "(" << tile_row_start<< "," << tile_col_start << ")" << " | ";
-            //            cout << "-> (" << tile_row_end << "," << tile_col_end << ")" << '|';
-            for (int ii = tile_row_start; ii < tile_row_end; ++ii)
-            {
-                for (int jj = tile_col_start; jj < tile_col_end; ++jj)
-                {
-                    if (x[ii - 1] == y[jj - 1])
-                    {
-                        dp[ii][jj] = dp[ii - 1][jj - 1];
-                    }
-                    else
-                    {
-                        dp[ii][jj] = min3(dp[ii - 1][jj - 1] + pxy,
-                                          dp[ii - 1][jj] + pgap,
-                                          dp[ii][jj - 1] + pgap);
+            // sequential calculate cells in tile
+            for (int i = tile_i_start; i < tile_i_end; i++) {
+                for (int j = tile_j_start; j < tile_j_end; j++) {
+                    if (x[i - 1] == y[j - 1]) {
+                        dp[i][j] = dp[i - 1][j - 1];
+                    } else {
+                        dp[i][j] = min3(dp[i - 1][j - 1] + pxy,
+                                        dp[i - 1][j] + pgap,
+                                        dp[i][j - 1] + pgap);
                     }
                 }
             }
         }
-        //        cout << "n_done" << endl;
     }
 
     // Reconstructing the solution
@@ -551,8 +544,8 @@ inline int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, i
         }
     }
 
-    omp_set_num_threads(omp_get_max_threads());
     int x_offset = xpos - i, y_offset = ypos - j;
+    omp_set_num_threads(n_threads);
     #pragma omp parallel 
     {
         #pragma omp for nowait
