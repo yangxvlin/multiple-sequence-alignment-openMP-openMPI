@@ -108,6 +108,14 @@ const int NEW_TASK_FLAG = 6;
 struct Triple { 
    int x, y, z; 
 }; 
+inline MPI_Datatype create_MPI_Triple()
+{
+    // define the Triple type for MPI
+    MPI_Datatype MPI_Triple;
+    MPI_Type_contiguous(3, MPI_INT, &MPI_Triple);
+    MPI_Type_commit(&MPI_Triple);
+    return MPI_Triple;
+}
 
 struct Task {
     int i, j, task_id;
@@ -269,6 +277,7 @@ std::string getMinimumPenalties(std::string *genes,
     }
 
     MPI_Datatype MPI_Packet = create_MPI_Packet();
+    MPI_Datatype MPI_Triple = create_MPI_Triple();
 
     // cout << "111111" << endl;
     // master's dynamic task control
@@ -277,26 +286,22 @@ std::string getMinimumPenalties(std::string *genes,
     {
         MPI_Status status;
         task_id = 0;
-        int task_penalty, i_j_task_id[3];
+        int task_penalty;
         
         if (omp_get_thread_num() == 0) {
             // broadcast initial task
             for (int i = 0; i < size; i++) {
+                // send to worker i
                 if (tasks.empty()) {
                     // no task
-                    i_j_task_id[0] = NO_MORE_TASK;
-                    i_j_task_id[1] = NO_MORE_TASK;
-                    i_j_task_id[2] = NO_MORE_TASK;
+                    Triple task = { NO_MORE_TASK, NO_MORE_TASK, NO_MORE_TASK };
+                    MPI_Send(&task, 1, MPI_Triple, i, NEW_TASK_FLAG, comm);
                 } else {
                     // new task
                     Triple task = tasks.front();
-                    i_j_task_id[0] = task.x;
-                    i_j_task_id[1] = task.y;
-                    i_j_task_id[2] = task.z;
+                    MPI_Send(&task, 1, MPI_Triple, i, NEW_TASK_FLAG, comm);
                     tasks.pop();
                 }
-                // send to worker i
-                MPI_Send(i_j_task_id, 3, MPI_INT, i, NEW_TASK_FLAG, comm);
             }
 
             for (int i = 0; i < total; i++) {
@@ -308,19 +313,15 @@ std::string getMinimumPenalties(std::string *genes,
 
                 // no more task for worker
                 if (tasks.empty()) {
-                    i_j_task_id[0] = NO_MORE_TASK;
-                    i_j_task_id[1] = NO_MORE_TASK;
-                    i_j_task_id[2] = NO_MORE_TASK;
+                    Triple task = { NO_MORE_TASK, NO_MORE_TASK, NO_MORE_TASK };
+                    MPI_Send(&task, 1, MPI_Triple, i, NEW_TASK_FLAG, comm);
                 // more task for worker
                 } else {
                     Triple task = tasks.front();
-                    i_j_task_id[0] = task.x;
-                    i_j_task_id[1] = task.y;
-                    i_j_task_id[2] = task.z;
+                    MPI_Send(&task, 1, MPI_Triple, i, NEW_TASK_FLAG, comm);
                     tasks.pop();
                 }
                 // send new task to worker
-                MPI_Send(i_j_task_id, 3, MPI_INT, status.MPI_SOURCE, NEW_TASK_FLAG, comm);
                 // cout << "rank[0] more task for rank[" << status.MPI_SOURCE << "]: task id:" << i_j_task_id[2] << " (" << i_j_task_id[0] << ", " << i_j_task_id[1] << ") " << endl;
             }
         } else if (omp_get_thread_num() == 1) {
@@ -328,19 +329,20 @@ std::string getMinimumPenalties(std::string *genes,
             start = GetTimeStamp();
             int i, j;
             // initial task
-            MPI_Recv(i_j_task_id, 3, MPI_INT, root, NEW_TASK_FLAG, comm, &status);
-            i = i_j_task_id[0];
-            j = i_j_task_id[1];
-            task_id = i_j_task_id[2];
+            Triple task;
+            MPI_Recv(&task, 1, MPI_Triple, root, NEW_TASK_FLAG, comm, &status);
+            i = task.x;
+            j = task.y;
+            task_id = task.z;
 
             while (task_id != NO_MORE_TASK) {
                 Packet p = do_task(genes[i], genes[j], task_id, pxy, pgap, genes_length[i], genes_length[j]);
                 MPI_Send(&p, 1, MPI_Packet, root, COLLECT_RESULT_TAG, comm);
                 // cout << "rank[0] done task id: " << p.task_id << ", penalty: " << p.task_penalty << endl;
-                MPI_Recv(i_j_task_id, 3, MPI_INT, root, NEW_TASK_FLAG, comm, &status);
-                i = i_j_task_id[0];
-                j = i_j_task_id[1];
-                task_id = i_j_task_id[2];
+                MPI_Recv(&task, 1, MPI_Triple, root, NEW_TASK_FLAG, comm, &status);
+                i = task.x;
+                j = task.y;
+                task_id = task.z;
             }
 
             end = GetTimeStamp();
@@ -400,23 +402,24 @@ void do_MPI_task(int rank) {
     start = GetTimeStamp();
     // worker works
     MPI_Datatype MPI_Packet = create_MPI_Packet();
+    MPI_Datatype MPI_Triple = create_MPI_Triple();
     MPI_Status status;
-    int i_j_task_id[3];
     int i, j, task_id;
-    MPI_Recv(i_j_task_id, 3, MPI_INT, root, NEW_TASK_FLAG, comm, &status);
-    i = i_j_task_id[0];
-    j = i_j_task_id[1];
-    task_id = i_j_task_id[2];
-    // cout << "rank[" << rank << "] new task: " << task_id << endl;
+    // initial task
+    Triple task;
+    MPI_Recv(&task, 1, MPI_Triple, root, NEW_TASK_FLAG, comm, &status);
+    i = task.x;
+    j = task.y;
+    task_id = task.z;
 
     while (task_id != NO_MORE_TASK) {
         Packet p = do_task(genes[i], genes[j], task_id, pxy, pgap, genes_length[i], genes_length[j]);
         MPI_Send(&p, 1, MPI_Packet, root, COLLECT_RESULT_TAG, comm);
-        MPI_Recv(i_j_task_id, 3, MPI_INT, root, NEW_TASK_FLAG, comm, &status);
-        i = i_j_task_id[0];
-        j = i_j_task_id[1];
-        task_id = i_j_task_id[2];
-        // cout << "rank[" << rank << "] new task: " << task_id << endl;
+        // cout << "rank[0] done task id: " << p.task_id << ", penalty: " << p.task_penalty << endl;
+        MPI_Recv(&task, 1, MPI_Triple, root, NEW_TASK_FLAG, comm, &status);
+        i = task.x;
+        j = task.y;
+        task_id = task.z;
     }
 
     end = GetTimeStamp();

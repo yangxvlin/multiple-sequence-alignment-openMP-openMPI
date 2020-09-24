@@ -43,6 +43,8 @@ done
 # sbatch --output=4node-4-cpt-1-npn-snowy.out  --job-name=4-cpt-1-npn --cpus-per-task=4 --partition=snowy    --ntasks-per-node=1 --nodes=4 "template.slurm"
 # sbatch --output=4node-10-cpt-1-npn-snowy.out  --job-name=10-cpt-1-npn --cpus-per-task=10 --partition=snowy    --ntasks-per-node=1 --nodes=4 "template.slurm"
 # sbatch --output=4node-16-cpt-1-npn-snowy.out  --job-name=16-cpt-1-npn --cpus-per-task=16 --partition=snowy    --ntasks-per-node=1 --nodes=4 "template.slurm" --time=0:05:00
+# sbatch --output=4node-16-cpt-1-npn-snowy1.out  --job-name=16-cpt-1-npn --cpus-per-task=16 --partition=snowy    --ntasks-per-node=1 --nodes=4 "template.slurm" --time=0:05:00
+# sbatch --output=4node-16-cpt-1-npn-snowy2.out  --job-name=16-cpt-1-npn --cpus-per-task=16 --partition=snowy    --ntasks-per-node=1 --nodes=4 "template.slurm" --time=0:05:00
 # sbatch --output=5node-16-cpt-1-npn-snowy.out  --job-name=16-cpt-1-npn --cpus-per-task=16 --partition=snowy    --ntasks-per-node=1 --nodes=5 "template.slurm" --time=0:05:00
 # sbatch --output=6node-16-cpt-1-npn-snowy.out  --job-name=16-cpt-1-npn --cpus-per-task=16 --partition=snowy    --ntasks-per-node=1 --nodes=6 "template.slurm"
 # sbatch --output=8node-4-cpt-1-npn-snowy.out  --job-name=4-cpt-1-npn --cpus-per-task=4 --partition=snowy    --ntasks-per-node=1 --nodes=8 "template.slurm"
