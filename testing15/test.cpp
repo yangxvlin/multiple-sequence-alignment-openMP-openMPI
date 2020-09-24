@@ -117,10 +117,10 @@ inline MPI_Datatype create_MPI_Triple()
     return MPI_Triple;
 }
 
-struct Task {
-    int i, j, task_id;
-    float task_cost; 
-};
+// struct Task {
+//     int i, j, task_id;
+//     float task_cost; 
+// };
 // struct task_cost_cmp {
 //     bool operator()(const Task & a, const Task & b) {
 //         // largest comes first
@@ -137,23 +137,23 @@ struct Packet {
     int task_id;
     char task_hash[SHA512_STRLEN];
 };
-inline bool cmp_task_id(const Packet &a, const Packet &b)
-{
-    return a.task_id < b.task_id;
-}
+// inline bool cmp_task_id(const Packet &a, const Packet &b)
+// {
+//     return a.task_id < b.task_id;
+// }
 inline MPI_Datatype create_MPI_Packet() {
     MPI_Datatype MPI_Packet;
     int blen[3];
-    MPI_Aint array_of_displacements[3];
-    MPI_Datatype oldtypes[3];
     blen[0] = 1;
-    array_of_displacements[0] = offsetof(Packet, task_penalty);
-    oldtypes[0] = MPI_INT;
     blen[1] = 1;
-    array_of_displacements[1] = offsetof(Packet, task_id);
-    oldtypes[1] = MPI_INT;
     blen[2] = SHA512_STRLEN;
+    MPI_Aint array_of_displacements[3];
+    array_of_displacements[0] = offsetof(Packet, task_penalty);
+    array_of_displacements[1] = offsetof(Packet, task_id);
     array_of_displacements[2] = offsetof(Packet, task_hash);
+    MPI_Datatype oldtypes[3];
+    oldtypes[0] = MPI_INT;
+    oldtypes[1] = MPI_INT;
     oldtypes[2] = MPI_CHAR;
     MPI_Type_create_struct(3, blen, array_of_displacements, oldtypes, &MPI_Packet);
     MPI_Type_commit(&MPI_Packet);
