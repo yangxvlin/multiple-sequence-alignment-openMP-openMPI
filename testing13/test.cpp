@@ -245,6 +245,7 @@ inline std::string getMinimumPenalties(std::string *genes,
 	                                   int *penalties) {
     std::string alignmentHash="";
     n_threads--;
+    int task_id;
     // number of processes
     int size;
     MPI_Comm_size(comm, &size);
@@ -287,7 +288,7 @@ inline std::string getMinimumPenalties(std::string *genes,
         if (omp_get_thread_num() == 0) {
                 // load tasks
                 queue<Triple> tasks;
-                int task_id = 0;
+                task_id = 0;
                 for(int i=1;i<k;i++){
                     for(int j=0;j<i;j++){
                         tasks.push({ i, j, task_id });
