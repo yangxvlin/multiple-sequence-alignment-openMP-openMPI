@@ -283,18 +283,18 @@ inline std::string getMinimumPenalties(std::string *genes,
     {
         MPI_Status status;
         task_id = 0;
-        int task_penalty;
+        // int task_penalty;
         
         if (omp_get_thread_num() == 0) {
-                // load tasks
-                queue<Triple> tasks;
-                task_id = 0;
-                for(int i=1;i<k;i++){
-                    for(int j=0;j<i;j++){
-                        tasks.push({ i, j, task_id });
-                        task_id++;
-                    }
+            // load tasks
+            queue<Triple> tasks;
+            task_id = 0;
+            for(int i=1;i<k;i++){
+                for(int j=0;j<i;j++){
+                    tasks.push({ i, j, task_id });
+                    task_id++;
                 }
+            }
 
             // broadcast initial task
             for (int i = 0; i < size; i++) {
@@ -341,6 +341,12 @@ inline std::string getMinimumPenalties(std::string *genes,
             //     alignmentHash = sw::sha512::calculate(alignmentHash.append(answers[i].task_hash));
             //     // penalties[i] = answers[i].task_penalty;
             // }
+            
+            // aggregrate answer hashs
+            for (int i = 0; i < total; i++) {
+                penalties[i] = answers[i].task_penalty;
+                alignmentHash = sw::sha512::calculate(alignmentHash.append(answers[i].task_hash));
+            }
 
         } else {
             // uint64_t start, end;
@@ -366,12 +372,6 @@ inline std::string getMinimumPenalties(std::string *genes,
             // end = GetTimeStamp();
             // cout << "rank[" << 0 << "] computes: " <<  end - start  << endl;
         }
-    }
-
-    // aggregrate answer hashs
-    for (int i = 0; i < total; i++) {
-        penalties[i] = answers[i].task_penalty;
-        alignmentHash = sw::sha512::calculate(alignmentHash.append(answers[i].task_hash));
     }
     // cout << "77777777" << endl;
 
@@ -459,11 +459,11 @@ inline int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, i
     #pragma omp parallel
     {
         #pragma omp for nowait
-        for (i = 0; i <= m; ++i) {
+        for (i = 0; i <= m; i++) {
             dp[i][0] = i * pgap;
         }
         #pragma omp for
-        for (i = 0; i <= n; ++i) {
+        for (i = 0; i <= n; i++) {
             dp[0][i] = i * pgap;
         }
     }
