@@ -226,7 +226,7 @@ std::string getMinimumPenalties(std::string *genes,
     {
         int n_task_done = 0;
         bool has_more_work = true;
-        int task_penalty, i_j_task_id[3], i, j, task_source, abc[3];
+        int task_penalty, i_j_task_id[3], i, j, task_source;
         int task_id;
         switch (omp_get_thread_num()) {
         case 15:
@@ -278,6 +278,7 @@ std::string getMinimumPenalties(std::string *genes,
                     task_id = 0;
                 } else {
                     // cout << "rank[0] start receive task"  <<endl;
+                    int  abc[3];
                     MPI_Recv(abc, 3, MPI_INT, root, new_task_flag, comm, &status);
                     i = abc[0];
                     j = abc[1];
@@ -286,7 +287,7 @@ std::string getMinimumPenalties(std::string *genes,
                 }
 
                 if (task_id > -1) {
-                    cout << "master do: " << task_id << endl;
+                    // cout << "master do: " << task_id << endl;
                     int l = genes_length[i] + genes_length[j];
                     int xans[l+1], yans[l+1];
                     task_penalty = getMinimumPenalty2(genes[i], genes[j], pxy, pgap, xans, yans, genes_length[i], genes_length[j], 15);
