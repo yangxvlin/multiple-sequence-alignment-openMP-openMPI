@@ -231,7 +231,7 @@ std::string getMinimumPenalties(std::string *genes,
         switch (omp_get_thread_num()) {
         case 15:
             for (int t = 0; t < total; t++) {
-                cout << "scheduler do: " << t << endl;
+                // cout << "scheduler do: " << t << endl;
                 // recv task id
                 MPI_Recv(&task_id, 1, MPI_INT, MPI_ANY_SOURCE, collect_results_tag, comm, &status);
                 task_source = status.MPI_SOURCE;
