@@ -436,21 +436,19 @@ inline void do_MPI_task(int rank) {
 }
 
 inline int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, int *xans, int *yans, int m, int n) {
-	int i, j; // intialising variables
+	int i, j;
 
     // int m = x.length(); // length of gene1
     // int n = y.length(); // length of gene2
 
-    // table for storing optimal substructure answers
     omp_set_num_threads(n_threads);
     int row = m + 1;
     int col = n + 1;
     int **dp = new2d(row, col);
 
-    // remove unnecessary memset
-    //    size_t size = row;
-    //    size *= col;
-    //    memset (dp[0], 0, size);
+    // size_t size = row;
+    // size *= col;
+    // memset (dp[0], 0, size);
 
     // intialising the table
     #pragma omp parallel
