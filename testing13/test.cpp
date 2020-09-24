@@ -344,7 +344,7 @@ std::string getMinimumPenalties(std::string *genes,
             }
 
             end = GetTimeStamp();
-            // cout << "rank[" << 0 << "] computes: " <<  end - start  << endl;
+            cout << "rank[" << 0 << "] computes: " <<  end - start  << endl;
         } else {
             // cout << "rank[0] other thread" << endl;
         }
