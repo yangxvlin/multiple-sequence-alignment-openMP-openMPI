@@ -167,7 +167,7 @@ std::string getMinimumPenalties(std::string *genes,
                                        int pgap,
 	                                   int *penalties) {
     int n_threads = 16;
-    omp_set_num_threads(n_threads);
+    // omp_set_num_threads(n_threads);
     // cout << "rank[" << 0 << "] has threads: " << omp_get_num_threads() << endl;
 
     // number of processes
