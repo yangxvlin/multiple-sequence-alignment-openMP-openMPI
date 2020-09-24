@@ -227,7 +227,7 @@ std::string getMinimumPenalties(std::string *genes,
     int n_task_done = 0;
     int i, j;
     bool has_more_work = true;
-    #pragma omp parallel num_threads(n_threads)
+    #pragma omp parallel
     {
         switch (omp_get_thread_num()) {
         case 15:
@@ -265,6 +265,9 @@ std::string getMinimumPenalties(std::string *genes,
             }
             break;
         case 0:
+            uint64_t start, end;
+            start = GetTimeStamp();
+            int task_id;
             while (has_more_work) {
                 if (n_task_done == 0) {
                     i = 1;
@@ -316,6 +319,8 @@ std::string getMinimumPenalties(std::string *genes,
                     has_more_work = false;
                 }
             }
+            end = GetTimeStamp();
+            cout << "rank[" << 0 << "] computes: " <<  end - start  << endl;
             break;
         default:
             break;
