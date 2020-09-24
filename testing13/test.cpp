@@ -543,24 +543,21 @@ int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, int *xan
 	// }
 
     int x_diff = xpos - i, y_diff = ypos - j;
-    #pragma omp parallel
-    {
-        #pragma omp for nowait
-        for (int ii = i; ii>0; ii--){
-            xans[ii + x_diff] = (int)x[ii - 1];
-        }
-        #pragma omp for nowait
-        for (int x_dash = x_diff; x_dash>0; x_dash--){
-            xans[x_dash] = (int)'_';
-        }
-        #pragma omp for nowait
-        for (int jj = j; jj>0; jj--){
-            yans[jj + y_diff] = (int)y[jj - 1];
-        }
-        #pragma omp for nowait
-        for (int y_dash = y_diff; y_dash>0; y_dash--){
-            yans[y_dash] = (int)'_';
-        }
+    #pragma omp parallel for
+    for (int ii = i; ii>0; ii--){
+        xans[ii + x_diff] = (int)x[ii - 1];
+    }
+    #pragma omp parallel for
+    for (int x_dash = x_diff; x_dash>0; x_dash--){
+        xans[x_dash] = (int)'_';
+    }
+    #pragma omp parallel for
+    for (int jj = j; jj>0; jj--){
+        yans[jj + y_diff] = (int)y[jj - 1];
+    }
+    #pragma omp parallel for
+    for (int y_dash = y_diff; y_dash>0; y_dash--){
+        yans[y_dash] = (int)'_';
     }
 
     int ret = dp[m][n];
