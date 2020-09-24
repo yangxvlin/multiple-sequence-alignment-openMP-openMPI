@@ -353,7 +353,7 @@ std::string getMinimumPenalties(std::string *genes,
 void do_MPI_task(int rank) {
     int n_threads = 16;
     // cout << "rank[" << rank << "] has threads: " << n_threads << endl;
-    omp_set_num_threads(n_threads);
+    // omp_set_num_threads(n_threads);
     MPI_Status status;
     
     // number of processes
