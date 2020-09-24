@@ -277,7 +277,6 @@ inline std::string getMinimumPenalties(std::string *genes,
 
     // cout << "111111" << endl;
     // master's dynamic task control
-    Packet answers[total];
     // vector<Packet> answers;
     #pragma omp parallel num_threads(2)
     {
@@ -311,6 +310,7 @@ inline std::string getMinimumPenalties(std::string *genes,
                 }
             }
 
+            Packet answers[total];
             for (int i = 0; i < total; i++) {
                 Packet task_result;
                 MPI_Recv(&task_result, 1, MPI_Packet, MPI_ANY_SOURCE, COLLECT_RESULT_TAG, comm, &status);
