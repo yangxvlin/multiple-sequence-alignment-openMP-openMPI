@@ -217,7 +217,7 @@ std::string getMinimumPenalties(std::string *genes,
             task_id++;
         }
     }
-    cout << "111111" << endl;
+    // cout << "111111" << endl;
     // master's dynamic task control
     MPI_Status status;
     task_id = 0;
@@ -243,9 +243,9 @@ std::string getMinimumPenalties(std::string *genes,
                     char answer_buffer[sha512_strlen];
                     MPI_Recv(answer_buffer, 128, MPI_CHAR, task_source, collect_results_tag3, comm, &status);
                     answers_hash[task_id] = string(answer_buffer, 128);
-                    cout << "rank[0] from rank[" << task_source << "]: task id: " << task_id << ", penalty: " << task_penalty << endl;
+                    // cout << "rank[0] from rank[" << task_source << "]: task id: " << task_id << ", penalty: " << task_penalty << endl;
                 } else {
-                    cout << "rank[0] from rank[" << task_source << "]" << endl;
+                    // cout << "rank[0] from rank[" << task_source << "]" << endl;
                 }
 
                 // has tasak for worker
@@ -256,14 +256,14 @@ std::string getMinimumPenalties(std::string *genes,
                     i_j_task_id[2] = t.task_id;
                     remaining_tasks.pop();
                     MPI_Send(i_j_task_id, 3, MPI_INT, task_source, new_task_flag, comm);
-                    cout << "rank[0] more task for rank[" << task_source << "]: task id:" << t.task_id << " (" << t.i << ", " << t.j << ") " << "cost: " << t.task_cost << endl;
+                    // cout << "rank[0] more task for rank[" << task_source << "]: task id:" << t.task_id << " (" << t.i << ", " << t.j << ") " << "cost: " << t.task_cost << endl;
                 // no more task for worker
                 } else {
                     i_j_task_id[0] = -1;
                     i_j_task_id[1] = -1;
                     i_j_task_id[2] = -1;
                     MPI_Send(i_j_task_id, 3, MPI_INT, task_source, new_task_flag, comm);
-                    cout << "rank[0] no more task for rank[" << task_source << endl;
+                    // cout << "rank[0] no more task for rank[" << task_source << endl;
                 }
             }
             break;
@@ -277,12 +277,12 @@ std::string getMinimumPenalties(std::string *genes,
                     j = 0;
                     task_id = 0;
                 } else {
-                    cout << "rank[0] start receive task"  <<endl;
+                    // cout << "rank[0] start receive task"  <<endl;
                     MPI_Recv(abc, 3, MPI_INT, root, new_task_flag, comm, &status);
                     i = abc[0];
                     j = abc[1];
                     task_id = abc[2];
-                    cout << "rank[0] finish receive task id: " << task_id  <<endl;
+                    // cout << "rank[0] finish receive task id: " << task_id  <<endl;
                 }
 
                 if (task_id > -1) {
@@ -317,11 +317,11 @@ std::string getMinimumPenalties(std::string *genes,
                     
                     MPI_Send(&task_id, 1, MPI_INT, root, collect_results_tag, comm);
                     penalties[task_id] = task_penalty;
-                    answers_hash[task_id] = problemhash;
                     // MPI_Send(&task_penalty, 1, MPI_INT, root, collect_results_tag2, comm);
+                    answers_hash[task_id] = problemhash;
                     // MPI_Send(problemhash.c_str(), 128, MPI_CHAR, root, collect_results_tag3, comm);
                     n_task_done++;
-                    cout << "master n_task_done: " << n_task_done << endl;
+                    // cout << "master n_task_done: " << n_task_done << endl;
                 } else {
                     has_more_work = false;
                 }
