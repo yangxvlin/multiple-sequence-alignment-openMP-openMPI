@@ -277,8 +277,8 @@ inline std::string getMinimumPenalties(std::string *genes,
 
     // cout << "111111" << endl;
     // master's dynamic task control
-    // string answers_hash[total];
-    vector<Packet> answers;
+    string answers_hash[total];
+    // vector<Packet> answers;
     #pragma omp parallel num_threads(2)
     {
         MPI_Status status;
@@ -316,7 +316,7 @@ inline std::string getMinimumPenalties(std::string *genes,
                 MPI_Recv(&task_result, 1, MPI_Packet, MPI_ANY_SOURCE, COLLECT_RESULT_TAG, comm, &status);
                 answers.push_back(task_result);
                 penalties[task_result.task_id] = task_result.task_penalty;
-                // answers_hash[task_result.task_id] = task_result.task_hash;
+                answers_hash[task_result.task_id] = task_result.task_hash;
                 // cout << "rank[0] from rank[" << status.MPI_SOURCE << "]: task id: " << task_result.task_id << ", penalty: " << task_result.task_penalty << endl;
 
                 // no more task for worker
@@ -333,15 +333,13 @@ inline std::string getMinimumPenalties(std::string *genes,
                 // cout << "rank[0] more task for rank[" << status.MPI_SOURCE << "]: task id:" << i_j_task_id[2] << " (" << i_j_task_id[0] << ", " << i_j_task_id[1] << ") " << endl;
             }
             
-            std::sort(answers.begin(), answers.end(), cmp_task_id);
-            
-            for (int i = 0; i < total; i++) {
-
-                // aggregrate answers
-                // alignmentHash = sw::sha512::calculate(alignmentHash.append(answers_hash[i]));
-                alignmentHash = sw::sha512::calculate(alignmentHash.append(answers[i].task_hash));
-                // penalties[i] = answers[i].task_penalty;
-            }
+            // std::sort(answers.begin(), answers.end(), cmp_task_id);
+            // for (int i = 0; i < total; i++) {
+            //     // aggregrate answers
+            //     // alignmentHash = sw::sha512::calculate(alignmentHash.append(answers_hash[i]));
+            //     alignmentHash = sw::sha512::calculate(alignmentHash.append(answers[i].task_hash));
+            //     // penalties[i] = answers[i].task_penalty;
+            // }
 
         } else {
             // uint64_t start, end;
@@ -369,6 +367,10 @@ inline std::string getMinimumPenalties(std::string *genes,
         }
     }
 
+    // aggregrate answer hashs
+    for (int i = 0; i < total; i++) {
+        alignmentHash = sw::sha512::calculate(alignmentHash.append(answers_hash[i]));
+    }
     // cout << "77777777" << endl;
 
 	return alignmentHash;
