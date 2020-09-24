@@ -277,13 +277,13 @@ std::string getMinimumPenalties(std::string *genes,
                     j = 0;
                     task_id = 0;
                 } else {
-                    // cout << "rank[0] start receive task"  <<endl;
+                    cout << "rank[0] start receive task"  <<endl;
                     int  abc[3];
                     MPI_Recv(abc, 3, MPI_INT, root, new_task_flag, comm, &status);
                     i = abc[0];
                     j = abc[1];
                     task_id = abc[2];
-                    // cout << "rank[0] finish receive task id: " << task_id  <<endl;
+                    cout << "rank[0] finish receive task id: " << task_id  <<endl;
                 }
 
                 if (task_id > -1) {
