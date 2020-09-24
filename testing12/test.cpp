@@ -225,7 +225,7 @@ std::string getMinimumPenalties(std::string *genes,
     string answers_hash[total];
     int i_j_task_id[3];
     int n_task_done = 0;
-    int i, j;
+    // int i, j;
     bool has_more_work = true;
     #pragma omp parallel
     {
@@ -236,14 +236,18 @@ std::string getMinimumPenalties(std::string *genes,
                 // recv task id
                 MPI_Recv(&task_id, 1, MPI_INT, MPI_ANY_SOURCE, collect_results_tag, comm, &status);
                 task_source = status.MPI_SOURCE;
-                // recv task penalty
-                MPI_Recv(&task_penalty, 1, MPI_INT, task_source, collect_results_tag2, comm, &status);
-                penalties[task_id] = task_penalty;
-                // recv task answer
-                char answer_buffer[sha512_strlen];
-                MPI_Recv(answer_buffer, 128, MPI_CHAR, task_source, collect_results_tag3, comm, &status);
-                answers_hash[task_id] = string(answer_buffer, 128);
-                cout << "rank[0] from rank[" << task_source << "]: task id: " << task_id << ", penalty: " << task_penalty << endl;
+                if (task_source > 0) {
+                    // recv task penalty
+                    MPI_Recv(&task_penalty, 1, MPI_INT, task_source, collect_results_tag2, comm, &status);
+                    penalties[task_id] = task_penalty;
+                    // recv task answer
+                    char answer_buffer[sha512_strlen];
+                    MPI_Recv(answer_buffer, 128, MPI_CHAR, task_source, collect_results_tag3, comm, &status);
+                    answers_hash[task_id] = string(answer_buffer, 128);
+                    cout << "rank[0] from rank[" << task_source << "]: task id: " << task_id << ", penalty: " << task_penalty << endl;
+                } else {
+                    cout << "rank[0] from rank[" << task_source << "]" << endl;
+                }
 
                 // has tasak for worker
                 if (!remaining_tasks.empty()) {
@@ -267,7 +271,7 @@ std::string getMinimumPenalties(std::string *genes,
         case 0:
             uint64_t start, end;
             start = GetTimeStamp();
-            int task_id, task_penalty, i_j_task_id[3];
+            int task_id, task_penalty, i_j_task_id[3], i, j;
             while (has_more_work) {
                 if (n_task_done == 0) {
                     i = 1;
@@ -311,8 +315,10 @@ std::string getMinimumPenalties(std::string *genes,
 
                     
                     MPI_Send(&task_id, 1, MPI_INT, root, collect_results_tag, comm);
-                    MPI_Send(&task_penalty, 1, MPI_INT, root, collect_results_tag2, comm);
-                    MPI_Send(problemhash.c_str(), 128, MPI_CHAR, root, collect_results_tag3, comm);
+                    penalties[task_id] = task_penalty;
+                    answers_hash[task_id] = problemhash;
+                    // MPI_Send(&task_penalty, 1, MPI_INT, root, collect_results_tag2, comm);
+                    // MPI_Send(problemhash.c_str(), 128, MPI_CHAR, root, collect_results_tag3, comm);
                     n_task_done++;
                     cout << "master n_task_done: " << n_task_done << endl;
                 } else {
