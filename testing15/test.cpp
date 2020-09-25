@@ -318,7 +318,10 @@ inline std::string getMinimumPenalties(std::string *genes,
             for (int i = 0; i < total; i++) {
                 Packet task_result;
                 MPI_Recv(&task_result, 1, MPI_Packet, MPI_ANY_SOURCE, COLLECT_RESULT_TAG, comm, &status);
+                #pragma omp critical
+                {
                 cout << "rank[0] from rank[" << status.MPI_SOURCE << "]: task id: " << task_result.task_id << ", penalty: " << task_result.task_penalty << endl;
+                }
                 answers[task_result.task_id] = task_result;
                 // answers.push_back(task_result);
                 // penalties[task_result.task_id] = task_result.task_penalty;
@@ -365,8 +368,11 @@ inline std::string getMinimumPenalties(std::string *genes,
                 Packet p = do_task(genes[task.x], genes[task.y], task.z, pxy, pgap, genes_length[task.x], genes_length[task.y]);
                 MPI_Send(&p, 1, MPI_Packet, root, COLLECT_RESULT_TAG, comm);
                 end1 = GetTimeStamp();
-                // cout << "rank[" << 0 << "] computes: " <<  end1 - start1 << " for task: " << p.task_id << " (" << genes[task.x] << ") with length: " << 
-                // genes_length[task.x] << ", (" << genes[task.y] << ") with length: "<< genes_length[task.y] << ", penalty: " << p.task_penalty << endl;
+                #pragma omp critical
+                {
+                cout << "rank[" << 0 << "] computes: " <<  end1 - start1 << " for task: " << p.task_id << " (" << genes[task.x] << ") with length: " << 
+                genes_length[task.x] << ", (" << genes[task.y] << ") with length: "<< genes_length[task.y] << ", penalty: " << p.task_penalty << endl;
+                }
             } while (true);
 
             end = GetTimeStamp();
