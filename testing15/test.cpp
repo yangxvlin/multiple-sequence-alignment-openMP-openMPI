@@ -356,8 +356,8 @@ inline std::string getMinimumPenalties(std::string *genes,
             }
 
         } else {
-            uint64_t start, end, start1, end1;
-            start = GetTimeStamp();
+            // uint64_t start, end, start1, end1;
+            // start = GetTimeStamp();
             Triple task;
             do {
                 MPI_Recv(&task, 1, MPI_Triple, root, NEW_TASK_FLAG, comm, &status);
@@ -375,8 +375,8 @@ inline std::string getMinimumPenalties(std::string *genes,
                 // }
             } while (true);
 
-            end = GetTimeStamp();
-            cout << "rank[" << 0 << "] computes: " <<  end - start  << endl;
+            // end = GetTimeStamp();
+            // cout << "rank[" << 0 << "] computes: " <<  end - start  << endl;
         }
     }
     // cout << "77777777" << endl;
@@ -401,7 +401,7 @@ inline void do_MPI_task(int rank) {
         pgap = k_pxy_pgap[2];
 
     // total tasks
-    int total = k * (k-1) / 2;
+    // int total = k * (k-1) / 2;
 
     // broadcast strings length from master
     int genes_length[k];
@@ -418,8 +418,8 @@ inline void do_MPI_task(int rank) {
     }
 
     
-    uint64_t start, end, start1, end1;
-    start = GetTimeStamp();
+    // uint64_t start, end, start1, end1;
+    // start = GetTimeStamp();
     // worker works
     MPI_Datatype MPI_Packet = create_MPI_Packet();
     MPI_Datatype MPI_Triple = create_MPI_Triple();
@@ -438,8 +438,8 @@ inline void do_MPI_task(int rank) {
         //         genes_length[task.x] << ", (" << genes[task.y] << ") with length: "<< genes_length[task.y] << ", penalty: " << p.task_penalty << endl;
     } while (true);
 
-    end = GetTimeStamp();
-    cout << "rank[" << rank << "] computes: " <<  end - start  << endl;
+    // end = GetTimeStamp();
+    // cout << "rank[" << rank << "] computes: " <<  end - start  << endl;
 }
 
 inline int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, int *xans, int *yans, int m, int n) {
@@ -581,16 +581,6 @@ inline int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, i
     }
 
     int ret = dp[m][n];
-
-    // cout.fill(' ');
-    // for (i = 0; i < row; i++) {
-    //     for (j = 0; j < col; j++) {
-    //         // Prints ' ' if j != n-1 else prints '\n'           
-    //         cout << setw(3) << dp[i][j] << " "; 
-    //     }
-    //     cout << "\n";
-    // }
-    // cout << ">>>> \n";
 
     delete[] dp[0];
     delete[] dp;

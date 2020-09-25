@@ -377,8 +377,8 @@ inline std::string getMinimumPenalties(std::string *genes,
             }
 
         } else {
-            uint64_t start, end, start1, end1;
-            start = GetTimeStamp();
+            // uint64_t start, end, start1, end1;
+            // start = GetTimeStamp();
             Task task;
             do {
                 MPI_Recv(&task, 1, MPI_Task, root, NEW_TASK_FLAG, comm, &status);
@@ -389,12 +389,12 @@ inline std::string getMinimumPenalties(std::string *genes,
                 Packet p = do_task(genes[task.x], genes[task.y], task.z, pxy, pgap, genes_length[task.x], genes_length[task.y]);
                 MPI_Send(&p, 1, MPI_Packet, root, COLLECT_RESULT_TAG, comm);
                 // end1 = GetTimeStamp();
-                cout << "rank[" << 0 << "] computes: " <<  end1 - start1 << " for task: " << task.z << " with length: " << 
-                genes_length[task.x] << ", " << genes_length[task.y] << endl;
+                // cout << "rank[" << 0 << "] computes: " <<  end1 - start1 << " for task: " << task.z << " with length: " << 
+                // genes_length[task.x] << ", " << genes_length[task.y] << endl;
             } while (true);
 
-            end = GetTimeStamp();
-            cout << "rank[" << 0 << "] computes: " <<  end - start  << endl;
+            // end = GetTimeStamp();
+            // cout << "rank[" << 0 << "] computes: " <<  end - start  << endl;
         }
     }
     // cout << "77777777" << endl;
@@ -436,8 +436,8 @@ inline void do_MPI_task(int rank) {
     }
 
     
-    uint64_t start, end;
-    start = GetTimeStamp();
+    // uint64_t start, end;
+    // start = GetTimeStamp();
     // worker works
     MPI_Datatype MPI_Packet = create_MPI_Packet();
     // MPI_Datatype MPI_Triple = create_MPI_Triple();
@@ -453,8 +453,8 @@ inline void do_MPI_task(int rank) {
         MPI_Send(&p, 1, MPI_Packet, root, COLLECT_RESULT_TAG, comm);
     } while (true);
 
-    end = GetTimeStamp();
-    cout << "rank[" << rank << "] computes: " <<  end - start  << endl;
+    // end = GetTimeStamp();
+    // cout << "rank[" << rank << "] computes: " <<  end - start  << endl;
 }
 
 inline int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, int *xans, int *yans, int m, int n) {
@@ -594,16 +594,6 @@ inline int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, i
     }
 
     int ret = dp[m][n];
-
-    // cout.fill(' ');
-    // for (i = 0; i < row; i++) {
-    //     for (j = 0; j < col; j++) {
-    //         // Prints ' ' if j != n-1 else prints '\n'           
-    //         cout << setw(3) << dp[i][j] << " "; 
-    //     }
-    //     cout << "\n";
-    // }
-    // cout << ">>>> \n";
 
     delete[] dp[0];
     delete[] dp;
