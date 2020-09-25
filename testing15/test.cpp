@@ -448,7 +448,7 @@ inline int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, i
     #pragma omp parallel
     {
         if (omp_get_thread_num() == 0 && omp_get_num_threads() <= 15) {
-            cout << omp_get_num_threads() <<" threads" << endl;
+            cout << omp_get_num_threads() <<" threads, n_threads=" << n_threads << endl;
         }
 
         #pragma omp for nowait
