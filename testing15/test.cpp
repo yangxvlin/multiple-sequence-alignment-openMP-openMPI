@@ -366,7 +366,7 @@ inline std::string getMinimumPenalties(std::string *genes,
                 MPI_Send(&p, 1, MPI_Packet, root, COLLECT_RESULT_TAG, comm);
                 // end1 = GetTimeStamp();
                 // cout << "rank[" << 0 << "] computes: " <<  end1 - start1 << " for task: " << task.z << " with length: " << 
-                genes_length[task.x] << ", " << genes_length[task.y] << endl;
+                // genes_length[task.x] << ", " << genes_length[task.y] << endl;
             } while (true);
 
             end = GetTimeStamp();

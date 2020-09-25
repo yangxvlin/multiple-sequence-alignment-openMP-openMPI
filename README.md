@@ -2,6 +2,7 @@
 COMP90025 - Parallel and Multicore Computing - 2020S2 - Assignment2B
 
 ## how to submit
+- ``` mpicxx -std=c++14 -O3 -fopenmp -o xuliny-seqalkway xuliny-seqalkway.cpp ```
 - ``` /data/gpfs/projects/punim0520/pmc/pub/bin/handin seqalkway xuliny-seqalkway.cpp <cpus-per-task> <ntasks-per-node>  ```
     - ``` <cpus-per-task> ```
       - cores per process
