@@ -318,11 +318,11 @@ inline std::string getMinimumPenalties(std::string *genes,
             for (int i = 0; i < total; i++) {
                 Packet task_result;
                 MPI_Recv(&task_result, 1, MPI_Packet, MPI_ANY_SOURCE, COLLECT_RESULT_TAG, comm, &status);
+                cout << "rank[0] from rank[" << status.MPI_SOURCE << "]: task id: " << task_result.task_id << ", penalty: " << task_result.task_penalty << endl;
                 answers[task_result.task_id] = task_result;
                 // answers.push_back(task_result);
                 // penalties[task_result.task_id] = task_result.task_penalty;
                 // answers_hash[task_result.task_id] = task_result.task_hash;
-                // cout << "rank[0] from rank[" << status.MPI_SOURCE << "]: task id: " << task_result.task_id << ", penalty: " << task_result.task_penalty << endl;
 
                 // no more task for worker
                 if (tasks.empty()) {
@@ -365,8 +365,8 @@ inline std::string getMinimumPenalties(std::string *genes,
                 Packet p = do_task(genes[task.x], genes[task.y], task.z, pxy, pgap, genes_length[task.x], genes_length[task.y]);
                 MPI_Send(&p, 1, MPI_Packet, root, COLLECT_RESULT_TAG, comm);
                 end1 = GetTimeStamp();
-                cout << "rank[" << 0 << "] computes: " <<  end1 - start1 << " for task: " << p.task_id << " (" << genes[task.x] << ") with length: " << 
-                genes_length[task.x] << ", (" << genes[task.y] << ") with length: "<< genes_length[task.y] << ", penalty: " << p.task_penalty << endl;
+                // cout << "rank[" << 0 << "] computes: " <<  end1 - start1 << " for task: " << p.task_id << " (" << genes[task.x] << ") with length: " << 
+                // genes_length[task.x] << ", (" << genes[task.y] << ") with length: "<< genes_length[task.y] << ", penalty: " << p.task_penalty << endl;
             } while (true);
 
             end = GetTimeStamp();
@@ -478,7 +478,7 @@ inline int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, i
     // There will be tile_width + num_tile_in_length-1 lines in the output
     for (int line = 1; line <= (num_tile_in_width + num_tile_in_length - 1); line++) {
         /* Get column index of the first element in this line of output. */
-        int start_col = max(1, line - num_tile_in_width + 1);
+        int start_col = max(1, line - num_tile_in_length + 1);
         /* Get count of elements in this line.  */
         int count = min(line, num_tile_in_width);
 
@@ -547,6 +547,8 @@ inline int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, i
         }
     }
 
+    
+
     int x_offset = xpos - i, y_offset = ypos - j;
     #pragma omp parallel 
     {
@@ -573,6 +575,16 @@ inline int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, i
     }
 
     int ret = dp[m][n];
+
+    // cout.fill(' ');
+    // for (i = 0; i < row; i++) {
+    //     for (j = 0; j < col; j++) {
+    //         // Prints ' ' if j != n-1 else prints '\n'           
+    //         cout << setw(3) << dp[i][j] << " "; 
+    //     }
+    //     cout << "\n";
+    // }
+    // cout << ">>>> \n";
 
     delete[] dp[0];
     delete[] dp;
