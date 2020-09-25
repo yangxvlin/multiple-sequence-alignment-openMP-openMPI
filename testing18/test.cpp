@@ -312,11 +312,11 @@ inline std::string getMinimumPenalties(std::string *genes,
                 // send to worker i
                 if (tasks.empty()) {
                     // no task
-                    MPI_Task task = { NO_MORE_TASK, NO_MORE_TASK, NO_MORE_TASK, NO_MORE_TASK };
+                    Task task = { NO_MORE_TASK, NO_MORE_TASK, NO_MORE_TASK, NO_MORE_TASK };
                     MPI_Send(&task, 1, MPI_Task, i, NEW_TASK_FLAG, comm);
                 } else {
                     // new task
-                    MPI_Task task = tasks.front();
+                    Task task = tasks.top();
                     MPI_Send(&task, 1, MPI_Task, i, NEW_TASK_FLAG, comm);
                     tasks.pop();
                 }
@@ -335,11 +335,11 @@ inline std::string getMinimumPenalties(std::string *genes,
 
                 // no more task for worker
                 if (tasks.empty()) {
-                    MPI_Task task = { NO_MORE_TASK, NO_MORE_TASK, NO_MORE_TASK, NO_MORE_TASK };
+                    Task task = { NO_MORE_TASK, NO_MORE_TASK, NO_MORE_TASK, NO_MORE_TASK };
                     MPI_Send(&task, 1, MPI_Task, status.MPI_SOURCE, NEW_TASK_FLAG, comm);
                 // more task for worker
                 } else {
-                    MPI_Task task = tasks.front();
+                    Task task = tasks.top();
                     MPI_Send(&task, 1, MPI_Task, status.MPI_SOURCE, NEW_TASK_FLAG, comm);
                     tasks.pop();
                 }
@@ -364,7 +364,7 @@ inline std::string getMinimumPenalties(std::string *genes,
         } else {
             uint64_t start, end, start1, end1;
             start = GetTimeStamp();
-            MPI_Task task;
+            Task task;
             do {
                 MPI_Recv(&task, 1, MPI_Task, root, NEW_TASK_FLAG, comm, &status);
                 if (task.z == NO_MORE_TASK) {
