@@ -499,7 +499,7 @@ inline int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, i
     // There will be tile_width + num_tile_in_length-1 lines in the output
     for (int line = 1; line <= (num_tile_in_width + num_tile_in_length - 1); line++) {
         /* Get column index of the first element in this line of output. */
-        int start_col = max(0, line - num_tile_in_width) + 1;
+        int start_col = max(1, line - num_tile_in_length + 1);
         /* Get count of elements in this line.  */
         int count = min(line, num_tile_in_width);
 
@@ -569,7 +569,6 @@ inline int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, i
     }
 
     int x_offset = xpos - i, y_offset = ypos - j;
-    omp_set_num_threads(n_threads);
     #pragma omp parallel 
     {
         #pragma omp for nowait
@@ -595,6 +594,16 @@ inline int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, i
     }
 
     int ret = dp[m][n];
+
+    // cout.fill(' ');
+    // for (i = 0; i < row; i++) {
+    //     for (j = 0; j < col; j++) {
+    //         // Prints ' ' if j != n-1 else prints '\n'           
+    //         cout << setw(3) << dp[i][j] << " "; 
+    //     }
+    //     cout << "\n";
+    // }
+    // cout << ">>>> \n";
 
     delete[] dp[0];
     delete[] dp;
