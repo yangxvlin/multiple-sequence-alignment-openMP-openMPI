@@ -128,7 +128,7 @@ struct task_cost_cmp {
 };
 bool cmp1(Task a, Task b) {
     // largest comes first
-    return a.task_cost < b.task_cost;
+    return a.task_cost > b.task_cost;
 }
 
 inline MPI_Datatype create_MPI_Task()
