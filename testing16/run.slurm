@@ -52,8 +52,8 @@ done
 # sbatch --output=12node-16-cpt-1-npn-snowy2.out  --job-name=16-cpt-1-npn --cpus-per-task=16 --partition=snowy    --ntasks-per-node=1 --nodes=12 "template.slurm" --time=0:03:00
 # 
 
-# sbatch --output=mseq-8node-16-cpt-1-npn-snowy.out  --job-name=16-cpt-1-npn --cpus-per-task=16 --partition=snowy    --ntasks-per-node=1 --nodes=8 "test1.slurm" --time=0:03:00
-# sbatch --output=mseq1-8node-16-cpt-1-npn-snowy.out  --job-name=16-cpt-1-npn --cpus-per-task=16 --partition=snowy    --ntasks-per-node=1 --nodes=8 "test2.slurm" --time=0:03:00
+# sbatch --output=mseq-12node-16-cpt-1-npn-snowy.out  --job-name=16-cpt-1-npn --cpus-per-task=16 --partition=snowy    --ntasks-per-node=1 --nodes=12 "test1.slurm" --time=0:03:00
+# sbatch --output=mseq1-12node-16-cpt-1-npn-snowy.out  --job-name=16-cpt-1-npn --cpus-per-task=16 --partition=snowy    --ntasks-per-node=1 --nodes=12 "test2.slurm" --time=0:03:00
 
 
 # sbatch --output=3node-16-cpt-1-npn-snowy.out  --job-name=16-cpt-1-npn --cpus-per-task=16 --partition=snowy    --ntasks-per-node=1 --nodes=3 "template.slurm" --time=0:10:00
