@@ -488,12 +488,12 @@ inline int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, i
                     if (x[i - 1] == y[j - 1]) {
                         dp[i][j] = dp[i - 1][j - 1];
                     } else {
-                        dp[i][j] = min3(dp[i - 1][j - 1] + pxy,
-                                        dp[i - 1][j] + pgap,
-                                        dp[i][j - 1] + pgap);
-                        // dp[i][j] = min(min(dp[i - 1][j - 1] + pxy,
-                        //                 dp[i - 1][j] + pgap),
+                        // dp[i][j] = min3(dp[i - 1][j - 1] + pxy,
+                        //                 dp[i - 1][j] + pgap,
                         //                 dp[i][j - 1] + pgap);
+                        dp[i][j] = min(min(dp[i - 1][j - 1] + pxy,
+                                        dp[i - 1][j] + pgap),
+                                        dp[i][j - 1] + pgap);
                     }
                 }
             }
