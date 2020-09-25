@@ -277,7 +277,7 @@ inline std::string getMinimumPenalties(std::string *genes,
 
     // cout << "111111" << endl;
     // master's dynamic task control
-    #pragma omp parallel num_threads(16)
+    #pragma omp parallel num_threads(2)
     {
         MPI_Status status;
         task_id = 0;
@@ -349,7 +349,7 @@ inline std::string getMinimumPenalties(std::string *genes,
                 alignmentHash = sw::sha512::calculate(alignmentHash.append(answers[i].task_hash));
             }
 
-        } else if (omp_get_thread_num() == 1) {
+        } else {
             uint64_t start, end, start1, end1;
             start = GetTimeStamp();
             Triple task;
@@ -447,9 +447,9 @@ inline int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, i
     // intialising the table
     #pragma omp parallel
     {
-        if (omp_get_thread_num() == 0 && omp_get_num_threads() <= 15) {
-            cout << omp_get_num_threads() <<" threads, n_threads=" << n_threads << endl;
-        }
+        // if (omp_get_thread_num() == 0 && omp_get_num_threads() <= 15) {
+        //     cout << omp_get_num_threads() <<" threads, n_threads=" << n_threads << endl;
+        // }
 
         #pragma omp for nowait
         for (i = 0; i <= m; i++) {
@@ -488,8 +488,11 @@ inline int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, i
                     if (x[i - 1] == y[j - 1]) {
                         dp[i][j] = dp[i - 1][j - 1];
                     } else {
-                        dp[i][j] = min3(dp[i - 1][j - 1] + pxy,
-                                        dp[i - 1][j] + pgap,
+                        // dp[i][j] = min3(dp[i - 1][j - 1] + pxy,
+                        //                 dp[i - 1][j] + pgap,
+                        //                 dp[i][j - 1] + pgap);
+                        dp[i][j] = min(min(dp[i - 1][j - 1] + pxy,
+                                        dp[i - 1][j] + pgap),
                                         dp[i][j - 1] + pgap);
                     }
                 }
