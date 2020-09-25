@@ -366,7 +366,7 @@ inline std::string getMinimumPenalties(std::string *genes,
                 MPI_Send(&p, 1, MPI_Packet, root, COLLECT_RESULT_TAG, comm);
                 end1 = GetTimeStamp();
                 cout << "rank[" << 0 << "] computes: " <<  end1 - start1 << " for task: " << p.task_id << " (" << genes[task.x] << ") with length: " << 
-                genes_length[task.x] << ", (" << genes[task.x] << ") with length: "<< genes_length[task.y] << ", penalty: " << p.task_penalty << endl;
+                genes_length[task.x] << ", (" << genes[task.y] << ") with length: "<< genes_length[task.y] << ", penalty: " << p.task_penalty << endl;
             } while (true);
 
             end = GetTimeStamp();
@@ -429,7 +429,7 @@ inline void do_MPI_task(int rank) {
         MPI_Send(&p, 1, MPI_Packet, root, COLLECT_RESULT_TAG, comm);
         end1 = GetTimeStamp();
         cout << "rank[" << rank << "] computes: " <<  end1 - start1 << " for task: " << p.task_id << " (" << genes[task.x] << ") with length: " << 
-                genes_length[task.x] << ", (" << genes[task.x] << ") with length: "<< genes_length[task.y] << ", penalty: " << p.task_penalty << endl;
+                genes_length[task.x] << ", (" << genes[task.y] << ") with length: "<< genes_length[task.y] << ", penalty: " << p.task_penalty << endl;
     } while (true);
 
     end = GetTimeStamp();
@@ -548,7 +548,6 @@ inline int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, i
     }
 
     int x_offset = xpos - i, y_offset = ypos - j;
-    omp_set_num_threads(n_threads);
     #pragma omp parallel 
     {
         #pragma omp for nowait
