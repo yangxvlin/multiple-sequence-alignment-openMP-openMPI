@@ -245,6 +245,9 @@ inline std::string getMinimumPenalties(std::string *genes,
 	                                   int *penalties) {
     std::string alignmentHash="";
     n_threads--;
+
+    omp_set_nested(1);  /* make sure nested parallism is on */
+
     int task_id;
     // number of processes
     int size;
