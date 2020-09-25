@@ -334,7 +334,7 @@ inline std::string getMinimumPenalties(std::string *genes,
                 // more task for worker
                 } else {
                     Triple task = tasks.back();
-                    MPI_Send(&task, 1, MPI_Triple, i, NEW_TASK_FLAG, comm);
+                    MPI_Send(&task, 1, MPI_Triple, status.MPI_SOURCE, NEW_TASK_FLAG, comm);
                     tasks.pop_back();
                 }
                 // send new task to worker
