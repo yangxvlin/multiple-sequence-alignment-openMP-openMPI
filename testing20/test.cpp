@@ -117,16 +117,28 @@ inline MPI_Datatype create_MPI_Triple()
     return MPI_Triple;
 }
 
-// struct Task {
-//     int i, j, task_id;
-//     float task_cost; 
-// };
-// struct task_cost_cmp {
-//     bool operator()(const Task & a, const Task & b) {
-//         // largest comes first
-//         return a.task_cost < b.task_cost;
-//     }
-// };
+struct Task {
+    int x, y, z, task_cost; 
+};
+struct task_cost_cmp {
+    bool operator()(const Task & a, const Task & b) {
+        // largest comes first
+        return a.task_cost < b.task_cost;
+    }
+};
+bool cmp1(Task a, Task b) {
+    // largest comes first
+    return a.task_cost < b.task_cost;
+}
+
+inline MPI_Datatype create_MPI_Task()
+{
+    // define the Task type for MPI
+    MPI_Datatype MPI_Task;
+    MPI_Type_contiguous(4, MPI_INT, &MPI_Task);
+    MPI_Type_commit(&MPI_Task);
+    return MPI_Task;
+}
 
 // struct Quatic {
 //     int x, y, z, r; 
@@ -235,6 +247,13 @@ inline Packet do_task(std::string gene1, std::string gene2,
     return p;
 }
 
+template<typename T>
+void pop_front(std::vector<T> &v) {
+	if (v.size() > 0) {
+		v.erase(v.begin());
+	}
+}
+
 // called by the root MPI task only
 // this procedure should distribute work to other MPI tasks
 // and put together results, etc.
@@ -276,7 +295,8 @@ inline std::string getMinimumPenalties(std::string *genes,
     }
 
     MPI_Datatype MPI_Packet = create_MPI_Packet();
-    MPI_Datatype MPI_Triple = create_MPI_Triple();
+    // MPI_Datatype MPI_Triple = create_MPI_Triple();
+    MPI_Datatype MPI_Task = create_MPI_Task();
 
     // cout << "111111" << endl;
     // master's dynamic task control
@@ -288,18 +308,18 @@ inline std::string getMinimumPenalties(std::string *genes,
         
         if (omp_get_thread_num() == 0) {
             // load tasks
-            vector<Triple> tasks;
+            // queue<Triple> tasks;
+            vector<Task> tasks;
             task_id = 0;
             for(int i=1;i<k;i++){
                 for(int j=0;j<i;j++){
-                    tasks.push_back({ i, j, task_id });
+                    tasks.push_back({ i, j, task_id, (genes_length[i]/1000) * (genes_length[j]/1000) });
                     task_id++;
                 }
             }
 
-            // using built-in random generator:
-            // std::sort (tasks.begin(), tasks.end(), myfunction);
-            std::random_shuffle( tasks.begin(), tasks.end() );
+            std::sort(tasks.begin(), tasks.end(), cmp1 );
+            std::random_shuffle ( tasks.begin() + tasks.size() / 2, tasks.end() );
 
             // broadcast initial task
             for (int i = 0; i < size; i++) {
@@ -307,13 +327,13 @@ inline std::string getMinimumPenalties(std::string *genes,
                 // send to worker i
                 if (tasks.empty()) {
                     // no task
-                    Triple task = { NO_MORE_TASK, NO_MORE_TASK, NO_MORE_TASK };
-                    MPI_Send(&task, 1, MPI_Triple, i, NEW_TASK_FLAG, comm);
+                    Task task = { NO_MORE_TASK, NO_MORE_TASK, NO_MORE_TASK, NO_MORE_TASK };
+                    MPI_Send(&task, 1, MPI_Task, i, NEW_TASK_FLAG, comm);
                 } else {
                     // new task
-                    Triple task = tasks.back();
-                    MPI_Send(&task, 1, MPI_Triple, i, NEW_TASK_FLAG, comm);
-                    tasks.pop_back();
+                    Task task = tasks.front();
+                    MPI_Send(&task, 1, MPI_Task, i, NEW_TASK_FLAG, comm);
+                    pop_front(tasks);
                 }
             }
 
@@ -330,13 +350,13 @@ inline std::string getMinimumPenalties(std::string *genes,
 
                 // no more task for worker
                 if (tasks.empty()) {
-                    Triple task = { NO_MORE_TASK, NO_MORE_TASK, NO_MORE_TASK };
-                    MPI_Send(&task, 1, MPI_Triple, status.MPI_SOURCE, NEW_TASK_FLAG, comm);
+                    Task task = { NO_MORE_TASK, NO_MORE_TASK, NO_MORE_TASK, NO_MORE_TASK };
+                    MPI_Send(&task, 1, MPI_Task, status.MPI_SOURCE, NEW_TASK_FLAG, comm);
                 // more task for worker
                 } else {
-                    Triple task = tasks.back();
-                    MPI_Send(&task, 1, MPI_Triple, status.MPI_SOURCE, NEW_TASK_FLAG, comm);
-                    tasks.pop_back();
+                    Task task = tasks.front();
+                    MPI_Send(&task, 1, MPI_Task, status.MPI_SOURCE, NEW_TASK_FLAG, comm);
+                    pop_front(tasks);
                 }
                 // send new task to worker
                 // cout << "rank[0] more task for rank[" << status.MPI_SOURCE << "]: task id:" << i_j_task_id[2] << " (" << i_j_task_id[0] << ", " << i_j_task_id[1] << ") " << endl;
@@ -359,9 +379,9 @@ inline std::string getMinimumPenalties(std::string *genes,
         } else {
             uint64_t start, end, start1, end1;
             start = GetTimeStamp();
-            Triple task;
+            Task task;
             do {
-                MPI_Recv(&task, 1, MPI_Triple, root, NEW_TASK_FLAG, comm, &status);
+                MPI_Recv(&task, 1, MPI_Task, root, NEW_TASK_FLAG, comm, &status);
                 if (task.z == NO_MORE_TASK) {
                     break;
                 }
@@ -420,11 +440,12 @@ inline void do_MPI_task(int rank) {
     start = GetTimeStamp();
     // worker works
     MPI_Datatype MPI_Packet = create_MPI_Packet();
-    MPI_Datatype MPI_Triple = create_MPI_Triple();
+    // MPI_Datatype MPI_Triple = create_MPI_Triple();
+    MPI_Datatype MPI_Task = create_MPI_Task();
     MPI_Status status;
-    Triple task;
+    Task task;
     do {
-        MPI_Recv(&task, 1, MPI_Triple, root, NEW_TASK_FLAG, comm, &status);
+        MPI_Recv(&task, 1, MPI_Task, root, NEW_TASK_FLAG, comm, &status);
         if (task.z == NO_MORE_TASK) {
             break;
         }
