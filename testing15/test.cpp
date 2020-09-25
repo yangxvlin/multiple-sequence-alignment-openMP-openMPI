@@ -365,8 +365,8 @@ inline std::string getMinimumPenalties(std::string *genes,
                 Packet p = do_task(genes[task.x], genes[task.y], task.z, pxy, pgap, genes_length[task.x], genes_length[task.y]);
                 MPI_Send(&p, 1, MPI_Packet, root, COLLECT_RESULT_TAG, comm);
                 end1 = GetTimeStamp();
-                cout << "rank[" << 0 << "] computes: " <<  end1 - start1 << " for task: " << p.task_id << " with length: " << 
-                genes_length[task.x] << ", " << genes_length[task.y] << ", penalty: " << p.task_penalty << endl;
+                cout << "rank[" << 0 << "] computes: " <<  end1 - start1 << " for task: " << p.task_id << " (" << genes[task.x] << ") with length: " << 
+                genes_length[task.x] << ", (" << genes[task.x] << ") with length: "<< genes_length[task.y] << ", penalty: " << p.task_penalty << endl;
             } while (true);
 
             end = GetTimeStamp();
@@ -428,8 +428,8 @@ inline void do_MPI_task(int rank) {
         Packet p = do_task(genes[task.x], genes[task.y], task.z, pxy, pgap, genes_length[task.x], genes_length[task.y]);
         MPI_Send(&p, 1, MPI_Packet, root, COLLECT_RESULT_TAG, comm);
         end1 = GetTimeStamp();
-        cout << "rank[" << rank << "] computes: " <<  end1 - start1 << " for task: " << p.task_id << " with length: " << 
-                genes_length[task.x] << ", " << genes_length[task.y] << ", penalty: " << p.task_penalty << endl;
+        cout << "rank[" << rank << "] computes: " <<  end1 - start1 << " for task: " << p.task_id << " (" << genes[task.x] << ") with length: " << 
+                genes_length[task.x] << ", (" << genes[task.x] << ") with length: "<< genes_length[task.y] << ", penalty: " << p.task_penalty << endl;
     } while (true);
 
     end = GetTimeStamp();
