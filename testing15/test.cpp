@@ -445,7 +445,7 @@ inline int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, i
     // memset (dp[0], 0, size);
 
     // intialising the table
-    #pragma omp parallel
+    #pragma omp parallel num_threads(n_threads)
     {
         if (omp_get_thread_num() == 0 && omp_get_num_threads() <= 15) {
             cout << omp_get_num_threads() <<" threads, n_threads=" << n_threads << endl;
