@@ -295,8 +295,8 @@ inline std::string getMinimumPenalties(std::string *genes,
             }
 
             // broadcast initial task
-            // for (int i = 0; i < size; i++) {
-            for (int i = 1; i < size; i++) {
+            for (int i = 0; i < size; i++) {
+            // for (int i = 1; i < size; i++) {
                 // send to worker i
                 if (tasks.empty()) {
                     // no task
@@ -352,19 +352,19 @@ inline std::string getMinimumPenalties(std::string *genes,
         } else {
             uint64_t start, end, start1, end1;
             start = GetTimeStamp();
-            // Triple task;
-            // do {
-            //     MPI_Recv(&task, 1, MPI_Triple, root, NEW_TASK_FLAG, comm, &status);
-            //     if (task.z == NO_MORE_TASK) {
-            //         break;
-            //     }
-            //     start1 = GetTimeStamp();
-            //     Packet p = do_task(genes[task.x], genes[task.y], task.z, pxy, pgap, genes_length[task.x], genes_length[task.y]);
-            //     MPI_Send(&p, 1, MPI_Packet, root, COLLECT_RESULT_TAG, comm);
-            //     end1 = GetTimeStamp();
-            //     cout << "rank[" << 0 << "] computes: " <<  end1 - start1 << " for task: " << task.z << " with length: " << 
-            //     genes_length[task.x] << ", " << genes_length[task.y] << endl;
-            // } while (true);
+            Triple task;
+            do {
+                MPI_Recv(&task, 1, MPI_Triple, root, NEW_TASK_FLAG, comm, &status);
+                if (task.z == NO_MORE_TASK) {
+                    break;
+                }
+                start1 = GetTimeStamp();
+                Packet p = do_task(genes[task.x], genes[task.y], task.z, pxy, pgap, genes_length[task.x], genes_length[task.y]);
+                MPI_Send(&p, 1, MPI_Packet, root, COLLECT_RESULT_TAG, comm);
+                end1 = GetTimeStamp();
+                cout << "rank[" << 0 << "] computes: " <<  end1 - start1 << " for task: " << task.z << " with length: " << 
+                genes_length[task.x] << ", " << genes_length[task.y] << endl;
+            } while (true);
 
             end = GetTimeStamp();
             cout << "rank[" << 0 << "] computes: " <<  end - start  << endl;
