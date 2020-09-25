@@ -475,8 +475,11 @@ inline int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, i
     }
 
     // calculate tile size
-    int tile_width = (int)ceil((1.0 * m) / n_threads); 
-    int tile_length = (int)ceil((1.0 * n) / n_threads);
+    int n_parallel = n_threads * 8;
+    int tile_width = (int)ceil((1.0 * m) / n_parallel); 
+    int tile_length = (int)ceil((1.0 * n) / n_parallel);
+    // int tile_width = (int)ceil((1.0 * m) / n_threads); 
+    // int tile_length = (int)ceil((1.0 * n) / n_threads);
     int num_tile_in_width = (int)ceil((1.0 * m) / tile_width);
     int num_tile_in_length = (int)ceil((1.0 * n) / tile_length);
 
