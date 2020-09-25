@@ -478,7 +478,7 @@ inline int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, i
     // There will be tile_width + num_tile_in_length-1 lines in the output
     for (int line = 1; line <= (num_tile_in_width + num_tile_in_length - 1); line++) {
         /* Get column index of the first element in this line of output. */
-        int start_col = max(0, line - num_tile_in_width) + 1;
+        int start_col = max(1, line - num_tile_in_width + 1);
         /* Get count of elements in this line.  */
         int count = min(line, num_tile_in_width);
 
