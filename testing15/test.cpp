@@ -349,8 +349,8 @@ inline std::string getMinimumPenalties(std::string *genes,
             }
 
         } else {
-            // uint64_t start, end;
-            // start = GetTimeStamp();
+            uint64_t start, end;
+            start = GetTimeStamp();
             Triple task;
             do {
                 MPI_Recv(&task, 1, MPI_Triple, root, NEW_TASK_FLAG, comm, &status);
@@ -361,8 +361,8 @@ inline std::string getMinimumPenalties(std::string *genes,
                 MPI_Send(&p, 1, MPI_Packet, root, COLLECT_RESULT_TAG, comm);
             } while (true);
 
-            // end = GetTimeStamp();
-            // cout << "rank[" << 0 << "] computes: " <<  end - start  << endl;
+            end = GetTimeStamp();
+            cout << "rank[" << 0 << "] computes: " <<  end - start  << endl;
         }
     }
     // cout << "77777777" << endl;
@@ -404,8 +404,8 @@ inline void do_MPI_task(int rank) {
     }
 
     
-    // uint64_t start, end;
-    // start = GetTimeStamp();
+    uint64_t start, end;
+    start = GetTimeStamp();
     // worker works
     MPI_Datatype MPI_Packet = create_MPI_Packet();
     MPI_Datatype MPI_Triple = create_MPI_Triple();
@@ -420,8 +420,8 @@ inline void do_MPI_task(int rank) {
         MPI_Send(&p, 1, MPI_Packet, root, COLLECT_RESULT_TAG, comm);
     } while (true);
 
-    // end = GetTimeStamp();
-    // cout << "rank[" << rank << "] computes: " <<  end - start  << endl;
+    end = GetTimeStamp();
+    cout << "rank[" << rank << "] computes: " <<  end - start  << endl;
 }
 
 inline int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, int *xans, int *yans, int m, int n) {
