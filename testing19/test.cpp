@@ -288,11 +288,11 @@ inline std::string getMinimumPenalties(std::string *genes,
         
         if (omp_get_thread_num() == 0) {
             // load tasks
-            queue<Triple> tasks;
+            vector<Triple> tasks;
             task_id = 0;
             for(int i=1;i<k;i++){
                 for(int j=0;j<i;j++){
-                    tasks.push({ i, j, task_id });
+                    tasks.push_back({ i, j, task_id });
                     task_id++;
                 }
             }
@@ -310,9 +310,9 @@ inline std::string getMinimumPenalties(std::string *genes,
                     MPI_Send(&task, 1, MPI_Triple, i, NEW_TASK_FLAG, comm);
                 } else {
                     // new task
-                    Triple task = tasks.front();
+                    Triple task = tasks.back();
                     MPI_Send(&task, 1, MPI_Triple, i, NEW_TASK_FLAG, comm);
-                    tasks.pop();
+                    tasks.pop_back();
                 }
             }
 
@@ -333,9 +333,9 @@ inline std::string getMinimumPenalties(std::string *genes,
                     MPI_Send(&task, 1, MPI_Triple, status.MPI_SOURCE, NEW_TASK_FLAG, comm);
                 // more task for worker
                 } else {
-                    Triple task = tasks.front();
-                    MPI_Send(&task, 1, MPI_Triple, status.MPI_SOURCE, NEW_TASK_FLAG, comm);
-                    tasks.pop();
+                    Triple task = tasks.back();
+                    MPI_Send(&task, 1, MPI_Triple, i, NEW_TASK_FLAG, comm);
+                    tasks.pop_back();
                 }
                 // send new task to worker
                 // cout << "rank[0] more task for rank[" << status.MPI_SOURCE << "]: task id:" << i_j_task_id[2] << " (" << i_j_task_id[0] << ", " << i_j_task_id[1] << ") " << endl;
@@ -368,7 +368,7 @@ inline std::string getMinimumPenalties(std::string *genes,
                 Packet p = do_task(genes[task.x], genes[task.y], task.z, pxy, pgap, genes_length[task.x], genes_length[task.y]);
                 MPI_Send(&p, 1, MPI_Packet, root, COLLECT_RESULT_TAG, comm);
                 // end1 = GetTimeStamp();
-                // cout << "rank[" << 0 << "] computes: " <<  end1 - start1 << " for task: " << task.z << " with length: " << 
+                cout << "rank[" << 0 << "] computes: " <<  end1 - start1 << " for task: " << task.z << " with length: " << 
                 genes_length[task.x] << ", " << genes_length[task.y] << endl;
             } while (true);
 
