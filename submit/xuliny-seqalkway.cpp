@@ -34,7 +34,8 @@ const int root = 0;
 // Driver code
 int main(int argc, char **argv){
 	int rank;
-	MPI_Init(&argc, &argv);
+	int prov;
+    MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &prov);
 	MPI_Comm_rank(comm, &rank);
 	if(rank==root){
 		int misMatchPenalty;
@@ -81,40 +82,76 @@ int main(int argc, char **argv){
 /******************************************************************************/
 #include <omp.h>
 #include <math.h>
-#include <set>
-#include <unordered_set>
 #include <vector>
+#include <queue> 
 #include <algorithm>    // std::sort
 
 // uncomment to enable debug
 // #define debug 0
 
-int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, int *xans, int *yans, int m, int n, int **dp);
+int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, int *xans, int *yans, int m, int n);
 
-// const int n_threads = 16;
-const int sha512_strlen = 128 + 1; // +1 for '\0'
+int n_threads = 16;
+constexpr int SHA512_STRLEN = 129; // 128+1 for '\0'
 
-const int ask_for_genes_tag = 1;
-const int send_genes_tag = 2;
-const int collect_results_tag = 3;
-const int collect_results_tag2 = 4;
-const int collect_results_tag3 = 5;
+constexpr int NO_MORE_TASK = -1;
+// constexpr int ask_for_genes_tag = 1;
+// constexpr int send_genes_tag = 2;
+constexpr int COLLECT_RESULT_TAG = 3;
+// constexpr int COLLECT_RESULT_TAG2 = 4;
+// constexpr int COLLECT_RESULT_TAG3 = 5;
+constexpr int NEW_TASK_FLAG = 6;
 
 struct Triple { 
    int x, y, z; 
 }; 
+inline MPI_Datatype create_MPI_Triple() {
+    MPI_Datatype MPI_Triple;
+    MPI_Type_contiguous(3, MPI_INT, &MPI_Triple);
+    MPI_Type_commit(&MPI_Triple);
+    return MPI_Triple;
+}
 
-struct Quatic {
-    int x, y, z, r; 
-};
+// struct Task {
+//     int i, j, task_id;
+//     float task_cost; 
+// };
+// struct task_cost_cmp {
+//     bool operator()(const Task & a, const Task & b) {
+//         // largest comes first
+//         return a.task_cost < b.task_cost;
+//     }
+// };
 
 struct Packet {
-    int task_id;
     int task_penalty;
-    char task_hash[sha512_strlen];
+    int task_id;
+    char task_hash[SHA512_STRLEN];
 };
+// inline bool cmp_task_id(const Packet &a, const Packet &b)
+// {
+//     return a.task_id < b.task_id;
+// }
+inline MPI_Datatype create_MPI_Packet() {
+    MPI_Datatype MPI_Packet;
+    int blen[3];
+    blen[0] = 1;
+    blen[1] = 1;
+    blen[2] = SHA512_STRLEN;
+    MPI_Aint array_of_displacements[3];
+    array_of_displacements[0] = offsetof(Packet, task_penalty);
+    array_of_displacements[1] = offsetof(Packet, task_id);
+    array_of_displacements[2] = offsetof(Packet, task_hash);
+    MPI_Datatype oldtypes[3];
+    oldtypes[0] = MPI_INT;
+    oldtypes[1] = MPI_INT;
+    oldtypes[2] = MPI_CHAR;
+    MPI_Type_create_struct(3, blen, array_of_displacements, oldtypes, &MPI_Packet);
+    MPI_Type_commit(&MPI_Packet);
+    return MPI_Packet;
+}
 
-int min3(int a, int b, int c) {
+inline int min3(int a, int b, int c) {
 	if (a <= b && a <= c) {
 		return a;
 	} else if (b <= a && b <= c) {
@@ -127,7 +164,7 @@ int min3(int a, int b, int c) {
 // equivalent of  int *dp[width] = new int[height][width]
 // but works for width not known at compile time.
 // (Delete structure by  delete[] dp[0]; delete[] dp;)
-int **new2d (int width, int height) {
+inline int **new2d (int width, int height) {
 	int **dp = new int *[width];
 	size_t size = width;
 	size *= height;
@@ -143,500 +180,315 @@ int **new2d (int width, int height) {
 	return dp;
 }
 
+inline Packet do_task(std::string gene1, std::string gene2, 
+                      int task_id, int pxy, int pgap, 
+                      int m, int n) {
+
+    int l = m + n;
+    int xans[l + 1], yans[l + 1];
+    int penalty = getMinimumPenalty2(gene1, gene2, pxy, pgap, xans, yans, m, n);
+
+    int id = 1;
+    int a;
+
+    // find the start of the extra gap
+    for (a = l; a >= 1; a--)
+    {
+        if ((char)yans[a] == '_' && (char)xans[a] == '_')
+        {
+            id = a + 1;
+            break;
+        }
+    }
+
+    // extract the exact alignment for both string
+    std::string align1 = "";
+    std::string align2 = "";
+    for (a = id; a <= l; a++)
+    {
+        align1.append(1, (char)xans[a]);
+    }
+    for (a = id; a <= l; a++)
+    {
+        align2.append(1, (char)yans[a]);
+    }
+
+    // alignmentHash = hash(alignmentHash ++ hash(hash(align1)++hash(align2)))
+    std::string align1hash = sw::sha512::calculate(align1);
+    std::string align2hash = sw::sha512::calculate(align2);
+    std::string problemhash = sw::sha512::calculate(align1hash.append(align2hash));
+
+    Packet p;
+    p.task_penalty = penalty;
+    p.task_id = task_id;
+    strcpy(p.task_hash, problemhash.c_str());
+
+    return p;
+}
+
 // called by the root MPI task only
 // this procedure should distribute work to other MPI tasks
 // and put together results, etc.
-std::string getMinimumPenalties(std::string *genes, 
+inline std::string getMinimumPenalties(std::string *genes, 
                                        int k, 
                                        int pxy, 
                                        int pgap,
 	                                   int *penalties) {
-    // uint64_t start = GetTimeStamp();
+    std::string alignmentHash="";
+    n_threads--;
 
-    MPI_Status status;
-    int n_threads = omp_get_max_threads();
-    // cout << "rank[" << 0 << "] has threads: " << n_threads << endl;
-    omp_set_num_threads(n_threads);
-	int probNum=0;
+    omp_set_nested(1);  /* make sure nested parallism is on */
 
+    int task_id;
+    // number of processes
     int size;
     MPI_Comm_size(comm, &size);
 
-    // send k, pxy, pgap to wrokers
+    // broadcast k, pxy, pgap to wrokers
     int k_pxy_pgap[3] = {k, pxy, pgap};
     MPI_Bcast(k_pxy_pgap, 3, MPI_INT, root, comm);
 
+    // total tasks
     int total = k * (k-1) / 2;
     // calculates string length
     int genes_length[k];
     for (int i = 0; i < k; i++) {
         genes_length[i] = genes[i].length();
     }
+    // broadcast strings length to wrokers
     MPI_Bcast(genes_length, k, MPI_INT, root, comm);
 
-    int max_gene_len = *std::max_element(genes_length, genes_length + k) + 1;
-    // #pragma omp parallel for schedule(static, 1)
+    // broadcast strings to wrokers
     for (int i = 0; i < k; i++) {
-        char buffer[max_gene_len];
-        memcpy(buffer, genes[i].c_str(), genes_length[i]);
-        MPI_Bcast(buffer, genes_length[i], MPI_CHAR, root, comm);
+        char str_buffer[genes_length[i]];
+        memcpy(str_buffer, genes[i].c_str(), genes_length[i]);
+        MPI_Bcast(str_buffer, genes_length[i], MPI_CHAR, root, comm);
     }
 
-    #ifdef DEBUG
-        cout << "rank[0][tasks generation start]" << endl;
-    #endif // DEBUG
+    MPI_Datatype MPI_Packet = create_MPI_Packet();
+    MPI_Datatype MPI_Triple = create_MPI_Triple();
 
-    // do root's tasks
-    // number of dp matrix calculation per process
-    // int tasks_per_process = (int) floor((1.0*total) / size);
-    // int my_tasks_start = tasks_per_process * (size-1), my_tasks_end = total; // lask chunk of tasks on root
-
-    // uint64_t end = GetTimeStamp();
-    // cout << "11111111 " << end - start << endl;
-    // start = GetTimeStamp();
-
-    // ask root for the genes needed for calculation
-    int task_id = 0;
-    // calculate calculation cells in each task and distribute evenly
-    unsigned long long n_cells[total];
-    unsigned long long total_cells = 0;
-    for(int i=1;i<k;i++){
-		for(int j=0;j<i;j++){
-            // cout << genes_length[i] << " " << genes_length[j] << endl;
-            n_cells[task_id] = (long) genes_length[i] * genes_length[j];
-            total_cells += n_cells[task_id];
-            // cout << i << " " << j << " " << n_cells[task_id] << " " << total_cells <<endl;
-            task_id++;
-        }
-    }
-
-    // end = GetTimeStamp();
-    // cout << "22222222 " << end - start << endl;
-    // start = GetTimeStamp();
-
-    unsigned long long cells_per_proccess = total_cells / size;
-    vector<Triple> tasks[size]; // i, j, id of (i, j) in whole tasks
-    task_id = 0;
-    // int task_rank_mapping[total];
-    int cur_rank = 0;
-    unsigned long long tmp = 0;
-    for(int i=1;i<k;i++){
-		for(int j=0;j<i;j++){
-            tmp += n_cells[task_id];
-
-            // cout << cur_rank << " does task: " << task_id << " (" << tmp << ")"<< cells_per_proccess << endl;
-            tasks[cur_rank].push_back({ i, j, task_id });
-            
-            if (tmp > cells_per_proccess) {
-                // task_rank_mapping[task_id] = cur_rank;
-                cur_rank++;
-                tmp = 0;
-            }
-            task_id++;
-        }
-    }
-
-    // end = GetTimeStamp();
-    // cout << "33333333 " << end - start << endl;
-    // start = GetTimeStamp();
-
-    int i_max_length = -1, j_max_length = -1;
-    for (int z = 0; z < tasks[0].size(); z++) {
-        Triple t = tasks[0].at(z);
-        if (genes_length[t.x] > i_max_length) {
-            i_max_length = genes_length[t.x];
-        }
-        if (genes_length[t.y] > j_max_length) {
-            j_max_length = genes_length[t.y];
-        }
-    }
-
-    // end = GetTimeStamp();
-    // cout << "44444444 " << end - start << endl;
-    // start = GetTimeStamp();
-
-    // create dp matrix for all tasks
-    int **dp = new2d(i_max_length + 1, j_max_length + 1);
-    // intialising the table
-    #pragma omp parallel 
+    // master's dynamic task control
+    #pragma omp parallel num_threads(2)
     {
-        #pragma omp for nowait
-        for (int i = 0; i <= i_max_length; i++) {
-            dp[i][0] = i * pgap;
-        }
-        #pragma omp for
-        for (int i = 1; i <= j_max_length; i++) {
-            dp[0][i] = i * pgap;
-        }
-    }
-
-    #ifdef DEBUG
-        cout << "rank[0][tasks generation finish]" << endl;
-    #endif // DEBUG
-
-    // end = GetTimeStamp();
-    // cout << "55555555 " << end - start << endl;
-    // start = GetTimeStamp();
-
-    string answers_hash[total];
-    // char answers_hash_array[total][sha512_strlen];
-    int n_tasks = tasks[0].size();
-    for (int z = 0; z < n_tasks; z++) {
-        // cout << "rank[0] " << z << endl;
-        Triple xyz = tasks[0].at(z);
-        int i = xyz.x, j = xyz.y, task_id = xyz.z;
-        int l = genes_length[i] + genes_length[j];
-        int xans[l+1], yans[l+1];
-        penalties[task_id] = getMinimumPenalty2(genes[i], genes[j], pxy, pgap, xans, yans, genes_length[i], genes_length[j], dp);
-        // Since we have assumed the answer to be n+m long,
-        // we need to remove the extra gaps in the starting
-        // id represents the index from which the arrays
-        // xans, yans are useful
-        int id = 1;
-        int a;
-        for (a = l; a >= 1; a--) {
-            if ((char)yans[a] == '_' && (char)xans[a] == '_') {
-                id = a + 1;
-                break;
-            }
-        }
-        std::string align1="";
-        std::string align2="";
-        for (a = id; a <= l; a++) {
-            align1.append(1,(char)xans[a]);
-        }
-        for (a = id; a <= l; a++) {
-            align2.append(1,(char)yans[a]);
-        }
-        std::string align1hash = sw::sha512::calculate(align1);
-        std::string align2hash = sw::sha512::calculate(align2);
-        std::string problemhash = sw::sha512::calculate(align1hash.append(align2hash));
-
-        // store problemhash to root
-        answers_hash[task_id] = problemhash;
-        #ifdef DEBUG
-            cout << "rank[0][calc] " << "task id: " << task_id << ", penalty: " << penalties[task_id] << ", hash: " << answers_hash[task_id] << endl;
-        #endif // DEBUG
-    }
-
-    // end = GetTimeStamp();
-    // cout << "66666666 rank[0]" << end - start << endl;
-    // start = GetTimeStamp();
-
-    #ifdef DEBUG
-        cout << "rank[0][calc] finish" << endl;
-    #endif // DEBUG
-    // recv results form worker
-    
-    // #pragma omp parallel for schedule(static, 1)
-    for (int i = 1; i < size; i++) {
-        int rank_task_size;
-        MPI_Recv(&rank_task_size, 1, MPI_INT, MPI_ANY_SOURCE, collect_results_tag, comm, &status);
-        int task_penalties[rank_task_size];
-        MPI_Recv(task_penalties, rank_task_size, MPI_INT, status.MPI_SOURCE, collect_results_tag2, comm, &status);
-        // MPI_Recv(task_penalties, rank_task_size, MPI_INT, i, collect_results_tag2, comm, &status);
-        char buffer[sha512_strlen];
+        MPI_Status status;
+        task_id = 0;
+        // int task_penalty;
         
-        for (int j = 0; j < rank_task_size; j++) {
-            int task_id = tasks[status.MPI_SOURCE].at(j).z;
-            penalties[task_id] = task_penalties[j];
+        if (omp_get_thread_num() == 0) {
+            // load tasks
+            queue<Triple> tasks;
+            task_id = 0;
+            for(int i=1;i<k;i++){
+                for(int j=0;j<i;j++){
+                    tasks.push({ i, j, task_id });
+                    task_id++;
+                }
+            }
 
-            MPI_Recv(buffer, 128, MPI_CHAR, status.MPI_SOURCE, collect_results_tag3, comm, &status);
-            answers_hash[task_id] = string(buffer, 128);
-            #ifdef DEBUG
-                cout << "id: " << task_id << ", " << answers_hash[task_id] << endl;
-            #endif // DEBUG
+            // broadcast initial task
+            for (int i = 0; i < size; i++) {
+            // for (int i = 1; i < size; i++) {
+                // send to worker i
+                if (tasks.empty()) {
+                    // no task
+                    Triple task = { NO_MORE_TASK, NO_MORE_TASK, NO_MORE_TASK };
+                    MPI_Send(&task, 1, MPI_Triple, i, NEW_TASK_FLAG, comm);
+                } else {
+                    // new task
+                    Triple task = tasks.front();
+                    MPI_Send(&task, 1, MPI_Triple, i, NEW_TASK_FLAG, comm);
+                    tasks.pop();
+                }
+            }
+
+            Packet answers[total];
+            // vector<Packet> answers;
+            for (int i = 0; i < total; i++) {
+                Packet task_result {  };
+                MPI_Recv(&task_result, 1, MPI_Packet, MPI_ANY_SOURCE, COLLECT_RESULT_TAG, comm, &status);
+                // #pragma omp critical
+                // {
+                // cout << "rank[0] from rank[" << status.MPI_SOURCE << "]: task id: " << task_result.task_id << ", penalty: " << task_result.task_penalty << endl;
+                // }
+                answers[task_result.task_id] = task_result;
+                // answers.push_back(task_result);
+                // penalties[task_result.task_id] = task_result.task_penalty;
+                // answers_hash[task_result.task_id] = task_result.task_hash;
+
+                // no more task for worker
+                if (tasks.empty()) {
+                    Triple task = { NO_MORE_TASK, NO_MORE_TASK, NO_MORE_TASK };
+                    MPI_Send(&task, 1, MPI_Triple, status.MPI_SOURCE, NEW_TASK_FLAG, comm);
+                // more task for worker
+                } else {
+                    Triple task = tasks.front();
+                    MPI_Send(&task, 1, MPI_Triple, status.MPI_SOURCE, NEW_TASK_FLAG, comm);
+                    tasks.pop();
+                }
+                // send new task to worker
+                // cout << "rank[0] more task for rank[" << status.MPI_SOURCE << "]: task id:" << i_j_task_id[2] << " (" << i_j_task_id[0] << ", " << i_j_task_id[1] << ") " << endl;
+            }
+            
+            // aggregrate answer hashs
+            for (int i = 0; i < total; i++) {
+                penalties[i] = answers[i].task_penalty;
+                alignmentHash = sw::sha512::calculate(alignmentHash.append(answers[i].task_hash));
+            }
+
+        } else {
+            // uint64_t start, end, start1, end1;
+            // start = GetTimeStamp();
+            Triple task;
+            do {
+                MPI_Recv(&task, 1, MPI_Triple, root, NEW_TASK_FLAG, comm, &status);
+                if (task.z == NO_MORE_TASK) {
+                    break;
+                }
+                // start1 = GetTimeStamp();
+                Packet p = do_task(genes[task.x], genes[task.y], task.z, pxy, pgap, genes_length[task.x], genes_length[task.y]);
+                MPI_Send(&p, 1, MPI_Packet, root, COLLECT_RESULT_TAG, comm);
+                // end1 = GetTimeStamp();
+                // #pragma omp critical
+                // {
+                // cout << "rank[" << 0 << "] computes: " <<  end1 - start1 << " for task: " << p.task_id << " (" << genes[task.x] << ") with length: " << 
+                // genes_length[task.x] << ", (" << genes[task.y] << ") with length: "<< genes_length[task.y] << ", penalty: " << p.task_penalty << endl;
+                // }
+            } while (true);
+
+            // end = GetTimeStamp();
+            // cout << "rank[" << 0 << "] computes: " <<  end - start  << endl;
         }
-        #ifdef DEBUG
-            cout << "rank[0][recv] answer from " << "rank: " << i << endl;
-        #endif // DEBUG
     }
-
-    // end = GetTimeStamp();
-    // cout << "77777777 " << end - start << endl;
-    // start = GetTimeStamp();
-
-    std::string alignmentHash="";
-    for (int i = 0; i < total; i++) {
-
-        // aggregrate result
-        #ifdef DEBUG
-            cout << "< " << alignmentHash << endl;
-            cout << ">("<< answers_hash[i].size() <<") " << answers_hash[i] << endl;
-        #endif // DEBUG
-        alignmentHash = sw::sha512::calculate(alignmentHash.append(answers_hash[i]));
-        #ifdef DEBUG
-            cout << alignmentHash << endl;
-            std::cout << std::endl;
-        #endif // DEBUG
-    }
-
-    // end = GetTimeStamp();
-    // cout << "88888888 " << end - start << endl;
-    // start = GetTimeStamp();
-
-    delete[] dp[0];
-    delete[] dp;
-
-    // end = GetTimeStamp();
-    // cout << "99999999 " << end - start << endl;
-
 	return alignmentHash;
 }
 
+
 // called for all tasks with rank!=root
 // do stuff for each MPI task based on rank
-void do_MPI_task(int rank) {
-    // uint64_t start = GetTimeStamp(), end;
-    int n_threads = omp_get_max_threads();
-    // cout << "rank[" << rank << "] has threads: " << n_threads << endl;
-    omp_set_num_threads(n_threads);
-    MPI_Status status;
+inline void do_MPI_task(int rank) {
+    // number of processes
     int size;
     MPI_Comm_size(comm, &size);
 
+    // broadcast strings length from master
     int k_pxy_pgap[3];
     MPI_Bcast(k_pxy_pgap, 3, MPI_INT, root, comm);
     int k = k_pxy_pgap[0], 
         pxy = k_pxy_pgap[1],
         pgap = k_pxy_pgap[2];
-    // cout << "rank[" << rank << "] received k pxy pgap " << endl;
-    #ifdef DEBUG
-        cout << "rank[" << rank << "][recv] " << "k: " << k << ", pxy: " << pxy << ", pgap: " << pgap << endl;
-    #endif // DEBUG
 
-    int total = k * (k-1) / 2;
-
-    // number of dp matrix calculation per process
-    int tasks_per_process = (int) floor((1.0*total) / size);
-    int my_tasks_start = tasks_per_process * (rank-1), my_tasks_end = tasks_per_process * rank;
-
-    // cout << "rank[" << rank << "] done task allocation " << n_threads << endl;
-    int local_genes_len[k];
-    MPI_Bcast(local_genes_len, k, MPI_INT, root, comm);
-
-    // cout << "rank[" << rank << "] received string lengths " << n_threads << endl;
+    // broadcast strings length from master
+    int genes_length[k];
+    MPI_Bcast(genes_length, k, MPI_INT, root, comm);
     
-    int max_gene_len = *std::max_element(local_genes_len, local_genes_len + k) + 1;
-    string local_genes[k];
-    // #pragma omp parallel for schedule(static, 1)
+    // broadcast strings from master
+    string genes[k];
     for (int i = 0; i < k; i++) {
-        char buffer[max_gene_len];
-        MPI_Bcast(buffer, local_genes_len[i], MPI_CHAR, root, comm);
-        buffer[local_genes_len[i]] = '\0';
-        local_genes[i] = string(buffer, local_genes_len[i]);
+        char buffer[genes_length[i] + 1];
+        MPI_Bcast(buffer, genes_length[i], MPI_CHAR, root, comm);
+        buffer[genes_length[i]] = '\0';
+        genes[i] = string(buffer, genes_length[i]);
     }
-    // cout << "rank[" << rank << "] received strings" << endl;
 
     
-
-    int task_id = 0;
-    // calculate calculation cells in each task and distribute evenly
-    unsigned long long n_cells[total];
-    unsigned long long total_cells = 0;
-    for(int i=1;i<k;i++){
-		for(int j=0;j<i;j++){
-            n_cells[task_id] = ((long) local_genes_len[i]) * ((long) local_genes_len[j]);
-            total_cells += n_cells[task_id];
-            task_id++;
+    // uint64_t start, end, start1, end1;
+    // start = GetTimeStamp();
+    // worker works
+    MPI_Datatype MPI_Packet = create_MPI_Packet();
+    MPI_Datatype MPI_Triple = create_MPI_Triple();
+    MPI_Status status;
+    Triple task;
+    do {
+        MPI_Recv(&task, 1, MPI_Triple, root, NEW_TASK_FLAG, comm, &status);
+        if (task.z == NO_MORE_TASK) {
+            break;
         }
-    }
+        // start1 = GetTimeStamp();
+        Packet p = do_task(genes[task.x], genes[task.y], task.z, pxy, pgap, genes_length[task.x], genes_length[task.y]);
+        MPI_Send(&p, 1, MPI_Packet, root, COLLECT_RESULT_TAG, comm);
+        // end1 = GetTimeStamp();
+        // cout << "rank[" << rank << "] computes: " <<  end1 - start1 << " for task: " << p.task_id << " (" << genes[task.x] << ") with length: " << 
+        //         genes_length[task.x] << ", (" << genes[task.y] << ") with length: "<< genes_length[task.y] << ", penalty: " << p.task_penalty << endl;
+    } while (true);
 
-    unsigned long long cells_per_proccess = total_cells / size;
-    vector<Triple> tasks[size]; // i, j, id of (i, j) in whole tasks
-    task_id = 0;
-    // int task_rank_mapping[total];
-    int cur_rank = 0;
-    unsigned long long tmp = 0;
-    for(int i=1;i<k;i++){
-		for(int j=0;j<i;j++){
-            tmp += n_cells[task_id];
-            if (cur_rank == rank) {
-                tasks[cur_rank].push_back({ i, j, task_id });
-            }
-            if (tmp > cells_per_proccess) {
-                // task_rank_mapping[task_id] = cur_rank;
-                cur_rank++;
-                tmp = 0;
-            }
-            // cout << cur_rank << " does task: " << task_id << endl;
-            task_id++;
-        }
-    }
+    // end = GetTimeStamp();
+    // cout << "rank[" << rank << "] computes: " <<  end - start  << endl;
+}
 
-    int i_max_length = -1, j_max_length = -1;
-    for (int z = 0; z < tasks[rank].size(); z++) {
-        Triple t = tasks[rank].at(z);
-        if (local_genes_len[t.x] > i_max_length) {
-            i_max_length = local_genes_len[t.x];
-        }
-        if (local_genes_len[t.y] > j_max_length) {
-            j_max_length = local_genes_len[t.y];
-        }
-    }
-    
+inline int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, int *xans, int *yans, int m, int n) {
+	int i, j;
 
-    // create dp matrix for all tasks
-    int **dp = new2d(i_max_length + 1, j_max_length + 1);
+    // int m = x.length(); // length of gene1
+    // int n = y.length(); // length of gene2
+
+    omp_set_num_threads(n_threads);
+    int row = m + 1;
+    int col = n + 1;
+    int **dp = new2d(row, col);
+
+    // size_t size = row;
+    // size *= col;
+    // memset (dp[0], 0, size);
+
     // intialising the table
-    #pragma omp parallel 
+    #pragma omp parallel
     {
+        // if (omp_get_thread_num() == 0 && omp_get_num_threads() <= 15) {
+        //     cout << omp_get_num_threads() <<" threads, n_threads=" << n_threads << endl;
+        // }
+
         #pragma omp for nowait
-        for (int i = 0; i <= i_max_length; i++) {
+        for (i = 0; i <= m; i++) {
             dp[i][0] = i * pgap;
         }
         #pragma omp for
-        for (int i = 1; i <= j_max_length; i++) {
+        for (i = 0; i <= n; i++) {
             dp[0][i] = i * pgap;
         }
     }
 
-    // start = GetTimeStamp();
-    // do sequence alignment calculation
-    int n_tasks = tasks[rank].size();
-    int task_ids[n_tasks];
-    int task_penalties[n_tasks];
-    string task_problemhashs[n_tasks];
-    for (int z = 0; z < n_tasks; z++) {
-        Triple xyz = tasks[rank].at(z);
-        int i = xyz.x, j = xyz.y;
-        task_ids[z] = xyz.z;
-        int l = local_genes_len[i] + local_genes_len[j];
-        int xans[l+1], yans[l+1];
-        task_penalties[z] = getMinimumPenalty2(local_genes[i], local_genes[j], pxy, pgap, xans, yans, local_genes_len[i], local_genes_len[j], dp);
-        // Since we have assumed the answer to be n+m long,
-        // we need to remove the extra gaps in the starting
-        // id represents the index from which the arrays
-        // xans, yans are useful
-        int id = 1;
-        int a;
-        for (a = l; a >= 1; a--) {
-            if ((char)yans[a] == '_' && (char)xans[a] == '_') {
-                id = a + 1;
-                break;
-            }
-        }
-        std::string align1="";
-        std::string align2="";
-        for (a = id; a <= l; a++) {
-            align1.append(1,(char)xans[a]);
-        }
-        for (a = id; a <= l; a++) {
-            align2.append(1,(char)yans[a]);
-        }
-        std::string align1hash = sw::sha512::calculate(align1);
-        std::string align2hash = sw::sha512::calculate(align2);
-        std::string problemhash = sw::sha512::calculate(align1hash.append(align2hash));
-        // store problemhash sent to root
-        task_problemhashs[z] = problemhash;
-        #ifdef DEBUG
-            cout << "rank[" << rank << "][calc] " << "task id: " << task_ids[z] << ", penalty: " << task_penalties[z] << ", hash("<< task_problemhashs[z].size() <<"): " << task_problemhashs[z] << endl;
-        #endif // DEBUG
-    }    
-
-    // end = GetTimeStamp();
-    // cout << "66666666 rank[" << rank << "]" << end - start << endl;
-    // start = GetTimeStamp();
-
-    // cout << "rank[" << rank << "] finish calculations " << endl;
-
-    // MPI_Send(task_ids, n_tasks, MPI_INT, root, collect_results_tag, comm);
-    MPI_Send(&n_tasks, 1, MPI_INT, root, collect_results_tag, comm);
-    MPI_Send(task_penalties, n_tasks, MPI_INT, root, collect_results_tag2, comm);
-    // sent jobs result to root
-    for (int i = 0; i < n_tasks; i++) {
-        MPI_Send(task_problemhashs[i].c_str(), 128, MPI_CHAR, root, collect_results_tag3, comm);
-    }
-
-    // delete[] dp[0];
-    // delete[] dp;
-
-    // cout << "rank[" << rank << "] finish send results to root " << endl;
-    #ifdef DEBUG
-        cout << "rank[" << rank << "][finish] " << endl;
-    #endif // DEBUG
-}
-
-int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, int *xans, int *yans, int m, int n, int **dp) {
-	int i, j; // intialising variables
-    int n_threads = omp_get_num_threads();
-
-    // int m = x.length(); // length of gene1
-    // int n = y.length(); // length of gene2
-    int row = m + 1, col = n + 1;
-
-    // table for storing optimal substructure answers
-    // int **dp = new2d(row, col);
-//	size_t size = m + 1;
-//	size *= n + 1;
-//	memset (dp[0], 0, size);
-
-    #ifdef DEBUG
-		cout.fill(' ');
-        for (i = 0; i < row; i++) {
-            for (j = 0; j < col; j++) {
-                // Prints ' ' if j != n-1 else prints '\n'           
-                cout << setw(3) << dp[i][j] << " "; 
-			}
-			cout << "\n";
-		}
-        cout << ">>>> \n";
-    #endif
-
-    // calcuting the minimum penalty
-    
-    // Tile parallel
-    int n_parallel = n_threads + (int (floor((1.0 * n_threads) / 3)));
     // calculate tile size
-    int tile_width  = (int) ceil((1.0*m) / n_parallel), 
-        tile_length = (int) ceil((1.0*n) / n_parallel);
-    int num_tile_in_width = (int) ceil((1.0*m) / tile_width);
-    int num_tile_in_length = (int) ceil((1.0*n) / tile_length);
+    int n_parallel = n_threads * 8;
+    int tile_width = (int)ceil((1.0 * m) / n_parallel); 
+    int tile_length = (int)ceil((1.0 * n) / n_parallel);
+    // int tile_width = (int)ceil((1.0 * m) / n_threads); 
+    // int tile_length = (int)ceil((1.0 * n) / n_threads);
+    int num_tile_in_width = (int)ceil((1.0 * m) / tile_width);
+    int num_tile_in_length = (int)ceil((1.0 * n) / tile_length);
 
     // modified from: https://www.geeksforgeeks.org/zigzag-or-diagonal-traversal-of-matrix/
     // There will be tile_width + num_tile_in_length-1 lines in the output
     for (int line = 1; line <= (num_tile_in_width + num_tile_in_length - 1); line++) {
-        /* Get column index of the first element in this line of output.
-           The index is 0 for first tile_width lines and line - tile_width for remaining
-           lines  */
-        int start_col = max(0, line - num_tile_in_width);
+        /* Get column index of the first element in this line of output. */
+        int start_col = max(1, line - num_tile_in_length + 1);
+        /* Get count of elements in this line.  */
+        int count = min(line, num_tile_in_width);
 
-        /* Get count of elements in this line. The count of elements is
-           equal to minimum of line number, num_tile_in_length-start_col and num_tile_in_width */
-        int count = min(line, min((num_tile_in_length - start_col), num_tile_in_width));
-
-        // parallel each tile on anti-diagonal
         #pragma omp parallel for
-        for (int z = 0; z < count; z++) {
-            int tile_i_start = (min(num_tile_in_width, line)-z-1)*tile_width +1,
-                tile_j_start = (start_col+z)*tile_length +1;
+        for (int z = start_col; z <= count; z++) {
+            int tile_i_start = (z - 1) * tile_width + 1;              
+            int tile_i_end = min(tile_i_start + tile_width, row); 
+            int tile_j_start = (line - z) * tile_length + 1; 
+            int tile_j_end = min(tile_j_start + tile_length, col); 
 
             // sequential calculate cells in tile
-            for (int i = tile_i_start; i < min(tile_i_start + tile_width, row); i++) {
-                for (int j = tile_j_start; j < min(tile_j_start + tile_length, col); j++) {
-
+            for (int i = tile_i_start; i < tile_i_end; i++) {
+                for (int j = tile_j_start; j < tile_j_end; j++) {
                     if (x[i - 1] == y[j - 1]) {
                         dp[i][j] = dp[i - 1][j - 1];
                     } else {
-                        dp[i][j] = min3(dp[i - 1][j - 1] + pxy ,
-                                dp[i - 1][j] + pgap ,
-                                dp[i][j - 1] + pgap);
+                        // dp[i][j] = min3(dp[i - 1][j - 1] + pxy,
+                        //                 dp[i - 1][j] + pgap,
+                        //                 dp[i][j - 1] + pgap);
+                        dp[i][j] = min(min(dp[i - 1][j - 1] + pxy,
+                                        dp[i - 1][j] + pgap),
+                                        dp[i][j - 1] + pgap);
                     }
                 }
             }
         }
     }
-
-    #ifdef DEBUG
-		cout.fill(' ');
-        for (i = 0; i < row; i++) {
-            for (j = 0; j < col; j++) {         
-                cout << setw(3) << dp[i][j] << " "; 
-			}
-			cout << "\n";
-		}
-        cout << ">>>> \n";
-    #endif
 
     // Reconstructing the solution
     int l = n + m; // maximum possible length
@@ -648,7 +500,6 @@ int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, int *xan
     int ypos = l;
 
     while (!(i == 0 || j == 0)) {
-
         if (x[i - 1] == y[j - 1]) {
             xans[xpos--] = (int) x[--i];
             yans[ypos--] = (int) y[--j];
@@ -678,19 +529,38 @@ int getMinimumPenalty2(std::string x, std::string y, int pxy, int pgap, int *xan
             // j--;
         }
     }
-    while (xpos > 0) {
-        if (i > 0) xans[xpos--] = (int) x[--i];
-        else xans[xpos--] = (int) '_';
-    }
-    while (ypos > 0) {
-        if (j > 0) yans[ypos--] = (int) y[--j];
-        else yans[ypos--] = (int) '_';
+
+    
+
+    int x_offset = xpos - i, y_offset = ypos - j;
+    #pragma omp parallel 
+    {
+        #pragma omp for nowait
+        for (int ii = i; ii > 0; ii--)
+        {
+            xans[ii + x_offset] = (int)x[ii - 1];
+        }
+
+        #pragma omp for nowait
+        for (int x_pos2 = x_offset; x_pos2 > 0; x_pos2--) {
+            xans[x_pos2] = (int)'_';
+        }
+
+        #pragma omp for nowait
+        for (int jj = j; jj > 0; jj--) {
+            yans[jj + y_offset] = (int)y[jj - 1];
+        }
+
+        #pragma omp for nowait
+        for (int y_pos2 = y_offset; y_pos2 > 0; y_pos2--) {
+            yans[y_pos2] = (int)'_';
+        }
     }
 
     int ret = dp[m][n];
 
-    // delete[] dp[0];
-    // delete[] dp;
+    delete[] dp[0];
+    delete[] dp;
 
     return ret;
 }
@@ -792,4 +662,4 @@ int getMinimumPenalty(std::string x, std::string y, int pxy, int pgap, int *xans
 	return ret;
 }
 
-// mpicxx -fopenmp -o xuliny-seqalkway xuliny-seqalkway.cpp
+// mpicxx -std=c++14 -O3 -fopenmp -o xuliny-seqalkway xuliny-seqalkway.cpp
