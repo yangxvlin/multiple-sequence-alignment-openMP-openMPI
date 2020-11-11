@@ -1,6 +1,20 @@
 # multiple-sequence-alignment-openMP-openMPI
 COMP90025 - Parallel and Multicore Computing - 2020S2 - Assignment2B
 
+## specification
+- [specification](./docs/Project2B.pdf)
+
+## report
+- [report](./docs/COMP90025_Assignment_02b.pdf)
+
+## code submission
+- [code](./submit/xuliny-seqalkway.cpp)
+
+## result
+- 8.6 out of 10 marks
+- <img src="./docs/marks.jpg">
+- <img src="./docs/result.jpg">
+
 ## how to submit
 - ``` mpicxx -std=c++14 -O3 -fopenmp -o xuliny-seqalkway xuliny-seqalkway.cpp ```
 - ``` /data/gpfs/projects/punim0520/pmc/pub/bin/handin seqalkway xuliny-seqalkway.cpp 16 1  ```
